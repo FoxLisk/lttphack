@@ -1,81 +1,58 @@
-; CONFIGURATION {{{
-cm_main_goto_config:
-	%cm_submenu("Configuration", cm_submenu_config)
+CONFIG_SUBMENU:
+%cm_header("CONFIGURATION", 5)
 
-cm_submenu_config:
-	dw cm_gameplay_rerandomize
-	dw cm_config_music
-	dw cm_config_autoload_preset
-	dw cm_config_preset_category
-	dw cm_config_hud_font
-	dw !menu_end
-	%cm_header("CONFIGURATION")
+;===============================================================================
+%cm_toggle("Rerandomize", !ram_rerandomize_toggle)
 
-cm_gameplay_rerandomize:
-	%cm_toggle("Rerandomize", !ram_rerandomize_toggle)
+;===============================================================================
+%cm_toggle_func("Music", !ram_feature_music, this)
 
-cm_config_music:
-	%cm_toggle_jsr("Music", !ram_feature_music)
+	LDA.w !ram_feature_music
+	BNE ++
+	JML mute_music
 
-.toggle
-	LDA.w !ram_feature_music : BNE ++
-	JSL mute_music
-	RTS
+++	JML unmute_music
 
-++	JSL unmute_music
+;===============================================================================
+%cm_toggle("Death reload", !ram_autoload_preset)
 
-	RTS
+;===============================================================================
+%cm_choice("Preset cat", !ram_preset_category, this)
 
-cm_config_autoload_preset:
-	%cm_toggle("Death reload", !ram_autoload_preset)
+%list_header(7)
+	%list_item("NMG")
+	%list_item("Hundo")
+	%list_item("Low")
+	%list_item("Low Legacy")
+	%list_item("AD 2020")
+	%list_item("AD 2014")
+	%list_item("Any RMG")
 
-cm_config_preset_category:
-	dw !CM_ACTION_CHOICE
-	dl !ram_preset_category
-	%cm_item("Preset cat")
+;===============================================================================
+%cm_choice("HUD font", !ram_hud_font, this)
 
-	%cm_item("NMG")
-	%cm_item("Hundo")
-	%cm_item("Low")
-	%cm_item("Low Legacy")
-	%cm_item("AD 2020")
-	%cm_item("AD 2014")
-	%cm_item("Any RMG")
-	db !list_end
+%list_header(24)
+	%list_item("Classic")
+	%list_item("Normal")
+	%list_item("Italic")
+	%list_item("Mario World")
+	%list_item("DKC")
+	%list_item("ZAMN")
+	%list_item("SMT")
+	%list_item("Earthbound")
 
+	%list_item("FF6")
+	%list_item("Lufia 2")
+	%list_item("Goonies 2")
+	%list_item("Emerald")
+	%list_item("Klonoa")
+	%list_item("TI-83")
+	%list_item("Pac-Man")
+	%list_item("DOOM")
 
-cm_config_hud_font:
-	dw !CM_ACTION_CHOICE
-	dl !ram_hud_font
-	%cm_item("HUD font")
-
-	%cm_item("Classic")
-	%cm_item("Normal")
-	%cm_item("Italic")
-	%cm_item("Mario World")
-	%cm_item("DKC")
-	%cm_item("ZAMN")
-	%cm_item("SMT")
-	%cm_item("Earthbound")
-
-	%cm_item("FF6")
-	%cm_item("Lufia 2")
-	%cm_item("Goonies 2")
-	%cm_item("Emerald")
-	%cm_item("Klonoa")
-	%cm_item("TI-83")
-	%cm_item("Pac-Man")
-	%cm_item("DOOM")
-
-	%cm_item("Undertale")
-	%cm_item("Planet X-3")
-	%cm_item("Skyroads")
-	%cm_item("Yoshi's")
-	%cm_item("S. Metroid")
-	%cm_item("Tazmania")
-;	%cm_item("")
-;	%cm_item("")
-
-	db !list_end
-
-; }}}
+	%list_item("Undertale")
+	%list_item("Planet X-3")
+	%list_item("Skyroads")
+	%list_item("Yoshi's")
+	%list_item("S. Metroid")
+	%list_item("Tazmania")

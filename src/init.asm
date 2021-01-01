@@ -21,7 +21,6 @@ init_hook:
 	RTL
 
 init_expand:
-	LDA #$01 : STA $420D ; enable fast rom
 	; enters AI=8
 	; If user holds Start+Select, we reinitialize.
 	; we need some manual joypad reading
@@ -37,21 +36,23 @@ init_expand:
 	REP #$20
 	LDA $00
 	AND #$FF00 : CMP #$3000 : BEQ .forcereset
-	LDA.w !ram_ctrl_prachack_menu : CMP #$1010 : BEQ .noforcereset
+	LDA.w !ram_init_sig : CMP #!INIT_SIGNATURE : BEQ .noforcereset
 
 .forcereset
 	JSR init_initialize_all
 	BRA .sram_initialized
 
 .noforcereset
-	LDA.w !ram_sram_initialized : CMP #!SRAM_VERSION : BEQ .sram_initialized
+	LDA.w !ram_sram_initialized
+	CMP.w #$0030 : BCC .forcereset
+	CMP #!SRAM_VERSION : BEQ .sram_initialized
 
 .reinitialize
 	JSR init_initialize
 
 .sram_initialized
 	; Some features probably should be turned off after a reset
-	SEP #$20
+	SEP #$30
 	STZ !lowram_oob_toggle
 	LDA #$00
 	STA.w !ram_superwatch
@@ -60,20 +61,40 @@ init_expand:
 	RTL
 
 init_initialize_all:
-	!PERM_INIT
+	PEA.w VERSIONSTABLE
+	BRA ++
 
 init_initialize:
-	!INIT_ASSEMBLY
+	PEA.w VERSIONUNSTABLE
 
-	LDA #!SRAM_VERSION : STA.l !ram_sram_initialized
+++	REP #$30
+	PLY
 
-	REP #$10
-	LDA #$0000
-	LDX #$00FE
+	PHB
+	PHK
+	PLB
 
-;.loop
-;	STA !sram_movies, X
-;	DEX #2 : BPL .loop
-;	SEP #$10
+.next
+	LDX.w $0000, Y
+	BEQ .done
 
+	INY
+	INY
+
+	LDA.w $0000, Y
+	STA.l $400000, X
+
+	INY
+	INY
+	BRA .next
+
+.done
+	PLB
 	RTS
+
+VERSIONSTABLE:
+	!PERM_INIT
+
+VERSIONUNSTABLE:
+	!TEMP_INIT
+	dw $0000, $0000

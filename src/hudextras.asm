@@ -32,13 +32,12 @@ fire_hud_irq:
 	RTS
 
 ; for lanmo counters
-org $05A39F
+org $05A39B
 	JML ResetLanmoCycles
 
 org $05A40E
 	JSL UpdateLanmoCycles
 	NOP
-
 
 warnpc $0DDB3F
 
@@ -399,17 +398,6 @@ draw_hud_extras:
 	JSR Draw_short_three
 
 ..skip
-	BRA .coordinates
-
-.calccoordposition
-	CLC
-	LDA.w #$0001
-	ADC.w !ram_counters_real
-	ADC.w !ram_counters_lag
-	ADC.w !ram_counters_idle
-	ADC.w !ram_counters_segment
-	STA.b SA1IRAM.SCRATCH+8
-
 .coordinates
 	LDA.w !ram_xy_toggle
 	BEQ ..skip
@@ -422,6 +410,8 @@ draw_hud_extras:
 	JSR UpdateCounterLine
 
 	PLY
+	BCC ..skip
+
 	JSR DrawCoordinates
 
 ..skip
@@ -482,7 +472,7 @@ draw_lanmo_cycles:
 	; if the camera matches but we're in the underworld
 	; then we'll have $0F, and it will fail
 	CMP #$0D ; 6 shifted left once and with a carry flag in bottom bit
-	REP #$20 ; faster because it removes an AND #$00FF to get rid of leakage
+	REP #$30 ; faster because it removes an AND #$00FF to get rid of leakage
 	BNE .skip
 
 	LDA #$340C ; 3
@@ -492,9 +482,13 @@ draw_lanmo_cycles:
 
 .skip
 draw_floor:
+	SEP #$20
+	LDA.b SA1IRAM.CopyOf_1B
+	LSR
 	LDA.b SA1IRAM.CopyOf_04A0
-	AND.w #$00FF
+	REP #$20
 	BEQ .skip
+	BCC .skip
 
 	LDA.w #$251E
 	STA.w SA1RAM.HUD+$A8

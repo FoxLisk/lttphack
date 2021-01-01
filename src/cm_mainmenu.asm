@@ -4,7 +4,7 @@ macro cm_header(title)
 	table ../resources/normal.tbl
 endmacro
 
-macro cm_item(title)
+macro list_item(title)
 	db $24, "<title>", $FF
 endmacro
 
@@ -59,6 +59,12 @@ macro cm_ctrl_shortcut(title, addr)
 	db $24, "<title>", $FF
 endmacro
 
+macro cm_ctrl_shortcut_final(title, addr)
+	dw !CM_ACTION_CTRL_SHORTCUT_FINAL
+	dl <addr>
+	db $24, "<title>", $FF
+endmacro
+
 macro cm_movie(title, slot)
 	dw !CM_ACTION_MOVIE
 	db <slot>
@@ -107,7 +113,7 @@ cm_main_goto_presets:
 	dl cm_ad2020_submenu_presets
 	dl cm_ad_submenu_presets
 	dl cm_anyrmg_submenu_presets
-	%cm_item("Presets")
+	%list_item("Presets")
 
 incsrc cm_presets_nmg.asm
 incsrc cm_presets_hundo.asm

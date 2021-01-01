@@ -46,10 +46,10 @@ cm_equipment_boots:
 cm_equipment_gloves:
 	dw !CM_ACTION_CHOICE
 	dl !ram_equipment_gloves
-	%cm_item("Gloves")
-	%cm_item("No")
-	%cm_item("Power glove")
-	%cm_item("Titan's mitt")
+	%list_item("Gloves")
+	%list_item("No")
+	%list_item("Power glove")
+	%list_item("Titan's mitt")
 	db !list_end
 
 cm_equipment_flippers:
@@ -76,12 +76,12 @@ cm_equipment_sword:
 	dw !CM_ACTION_CHOICE_JSR
 	dw .toggle_sword
 	dl !ram_equipment_sword
-	%cm_item("Sword")
-	%cm_item("No")
-	%cm_item("Fighter")
-	%cm_item("Master")
-	%cm_item("Tempered")
-	%cm_item("Gold")
+	%list_item("Sword")
+	%list_item("No")
+	%list_item("Fighter")
+	%list_item("Master")
+	%list_item("Tempered")
+	%list_item("Gold")
 	db !list_end
 
 .toggle_sword
@@ -94,11 +94,11 @@ cm_equipment_shield:
 	dw !CM_ACTION_CHOICE_JSR
 	dw .toggle_shield
 	dl !ram_equipment_shield
-	%cm_item("Shield")
-	%cm_item("No")
-	%cm_item("Fighter")
-	%cm_item("Red")
-	%cm_item("Mirror")
+	%list_item("Shield")
+	%list_item("No")
+	%list_item("Fighter")
+	%list_item("Red")
+	%list_item("Mirror")
 	db !list_end
 
 .toggle_shield
@@ -111,10 +111,10 @@ cm_equipment_armor:
 	dw !CM_ACTION_CHOICE_JSR
 	dw .toggle_armor
 	dl !ram_equipment_armor
-	%cm_item("Armor")
-	%cm_item("Green")
-	%cm_item("Blue")
-	%cm_item("Red")
+	%list_item("Armor")
+	%list_item("Green")
+	%list_item("Blue")
+	%list_item("Red")
 	db !list_end
 
 .toggle_armor
@@ -156,25 +156,25 @@ cm_equipment_maxhp:
 	dw !CM_ACTION_CHOICE_JSR
 	dw .set_maxhp
 	dl SA1RAM.cm_equipment_maxhp
-	%cm_item("Max HP")
-	%cm_item("3")
-	%cm_item("4")
-	%cm_item("5")
-	%cm_item("6")
-	%cm_item("7")
-	%cm_item("8")
-	%cm_item("9")
-	%cm_item("10")
-	%cm_item("11")
-	%cm_item("12")
-	%cm_item("13")
-	%cm_item("14")
-	%cm_item("15")
-	%cm_item("16")
-	%cm_item("17")
-	%cm_item("18")
-	%cm_item("19")
-	%cm_item("20")
+	%list_item("Max HP")
+	%list_item("3")
+	%list_item("4")
+	%list_item("5")
+	%list_item("6")
+	%list_item("7")
+	%list_item("8")
+	%list_item("9")
+	%list_item("10")
+	%list_item("11")
+	%list_item("12")
+	%list_item("13")
+	%list_item("14")
+	%list_item("15")
+	%list_item("16")
+	%list_item("17")
+	%list_item("18")
+	%list_item("19")
+	%list_item("20")
 	db !list_end
 
 .set_maxhp

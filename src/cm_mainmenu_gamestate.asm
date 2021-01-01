@@ -23,18 +23,18 @@ cm_game_state_world:
 	dw !CM_ACTION_TOGGLE_BIT_TEXT
 	dl SA1RAM.cm_gamestate_world
 	db $40
-	%cm_item("World")
-	%cm_item("Light World")
-	%cm_item("Dark World")
+	%list_item("World")
+	%list_item("Light World")
+	%list_item("Dark World")
 	db !list_end
 
 cm_game_state_crystal_switch:
 	dw !CM_ACTION_CHOICE_JSR
 	dw .update_tilemap
 	dl !ram_cm_crystal_switch
-	%cm_item("Switch Color")
-	%cm_item("Red")
-	%cm_item("Blue")
+	%list_item("Switch Color")
+	%list_item("Red")
+	%list_item("Blue")
 	db !list_end
 
 .update_tilemap
@@ -58,22 +58,22 @@ cm_game_state_set_follower:
 	dw !CM_ACTION_CHOICE_JSR
 	dw .update
 	dl $7EF3CC
-	%cm_item("Follower")
-	%cm_item("Lonely Link")
-	%cm_item("Zelda")
-	%cm_item("Garbage")
-	%cm_item("Trash")
-	%cm_item("Old man")
-	%cm_item("Zelda text")
-	%cm_item("Blind")
-	%cm_item("Frog")
-	%cm_item("Dwarf")
-	%cm_item("Sign man")
-	%cm_item("Kiki")
-	%cm_item("??????")
-	%cm_item("Purple chest")
-	%cm_item("Super bomb")
-	%cm_item("Sasha text")
+	%list_item("Follower")
+	%list_item("Lonely Link")
+	%list_item("Zelda")
+	%list_item("Garbage")
+	%list_item("Trash")
+	%list_item("Old man")
+	%list_item("Zelda text")
+	%list_item("Blind")
+	%list_item("Frog")
+	%list_item("Dwarf")
+	%list_item("Sign man")
+	%list_item("Kiki")
+	%list_item("??????")
+	%list_item("Purple chest")
+	%list_item("Super bomb")
+	%list_item("Sasha text")
 	db !list_end
 
 .update
@@ -249,26 +249,26 @@ reset_dungeon:
 cm_game_state_progress:
 	dw !CM_ACTION_CHOICE
 	dl !ram_game_progress
-	%cm_item("Progress")
-	%cm_item("Started")
-	%cm_item("Uncle")
-	%cm_item("Zelda")
-	%cm_item("Agahnim")
+	%list_item("Progress")
+	%list_item("Started")
+	%list_item("Uncle")
+	%list_item("Zelda")
+	%list_item("Agahnim")
 	db !list_end
 
 cm_game_state_map_indicator:
 	dw !CM_ACTION_CHOICE
 	dl !ram_game_map_indicator
-	%cm_item("Map indicator")
-	%cm_item("Castle")
-	%cm_item("Kakariko")
-	%cm_item("Sahasrahla")
-	%cm_item("Pendants")
-	%cm_item("MS")
-	%cm_item("ATower")
-	%cm_item("Darkness")
-	%cm_item("Crystals")
-	%cm_item("GTower")
+	%list_item("Map indicator")
+	%list_item("Castle")
+	%list_item("Kakariko")
+	%list_item("Sahasrahla")
+	%list_item("Pendants")
+	%list_item("MS")
+	%list_item("ATower")
+	%list_item("Darkness")
+	%list_item("Crystals")
+	%list_item("GTower")
 	db !list_end
 
 cm_game_state_goto_flags_submenu:

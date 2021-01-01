@@ -1,42 +1,37 @@
 pushpc
-org $008056 ; Game Mode Hijack
-	JSL gamemode_hook
-pullpc
-
+org $008039
 gamemode_hook:
-	LDA.w SA1IRAM.SHORTCUT_USED
-	BEQ .askforshortcut
+	BIT.w SA1IRAM.SHORTCUT_USED+1
+	BPL .askforshortcut
 
-	REP #$20
+	JSL UseShortCut
 
-	PHK
-	PEA.w .ret-1
-
-	JMP.w (SA1IRAM.SHORTCUT_USED)
-
-.ret
-	REP #$20
-	STZ.w SA1IRAM.SHORTCUT_USED+0
-	RTL
+	SEP #$30
+	STZ.w SA1IRAM.SHORTCUT_USED+1
+	BRA .done
 
 .askforshortcut
-	LDA #$81 : STA.l $002200 ; SA-1 IRQ, bit 1 for preparing shortcut checks
-	JML $0080B5 ; GameMode
+	LDA.b #$81
+	STA.w $2200 ; SA-1 IRQ, bit 1 for preparing shortcut checks
+	BRA .done
 
-
-	;LDA.l !ram_lagometer_toggle : BEQ .done
-	;JSR gamemode_lagometer
+warnpc $008051
+org $008051
 .done
-	RTL
+
+pullpc
+
+UseShortCut:
+	JMP.w (SA1IRAM.SHORTCUT_USED)
+
+UseShortCutSA1:
+	DEC
+	PHA
+	RTS
 
 ; Custom Menu
 gamemode_custom_menu:
-	LDA $10 : STA.w SA1RAM.cm_old_gamemode
-
-	LDA #$000C : STA $10
-
-	RTL
-
+	JML CM_Main
 
 ; Load previous preset
 gamemode_load_previous_preset:
@@ -80,13 +75,13 @@ gamemode_savestate:
 -	LDA $4300, X : STA.w SA1RAM.ss_dma_buffer, X
 	INX
 	INY : CPY #$000B : BNE -
-	CPX #$007B : BEQ +
+	CPX #$007B : BCS +
 	INX #5
 	LDY #$0000
 	BRA -
 	; end of DMA to SRAM
 
-+	JSR ppuoff
++	JSL ppuoff
 	LDA #$80 : STA $4310 ; B to A
 	JSR DMA_BWRAMSRAM
 
@@ -101,8 +96,8 @@ gamemode_savestate:
 	LDA.w !ram_rerandomize_toggle : BEQ .dont_rerandomize_1
 
 	; Save the current framecounter & rng accumulator
-	LDA $1A : STA.w !ram_rerandomize_framecount
-	LDA $0FA1 : STA.w !ram_rerandomize_rng
+	LDA $1A : STA.w SA1RAM.frame_cache
+	LDA $0FA1 : STA.w SA1RAM.rng_cache
 
 .dont_rerandomize_1
 	SEP #$20
@@ -113,7 +108,7 @@ gamemode_savestate:
 	LDA #$05 : STA $2141
 
 	STZ $420C
-	JSR ppuoff
+	JSL ppuoff
 	STZ $4310
 	LDA.b #$00 : STA.w $4310
 	JSR DMA_BWRAMSRAM
@@ -144,8 +139,8 @@ gamemode_savestate:
 
 	LDA.w !ram_rerandomize_toggle : BEQ .dont_rerandomize_2
 
-	LDA.w !ram_rerandomize_framecount : STA $1A
-	LDA.w !ram_rerandomize_rng : STA $0FA1
+	LDA.w SA1RAM.frame_cache : STA $1A
+	LDA.w SA1RAM.rng_cache : STA $0FA1
 
 .dont_rerandomize_2
 	LDA.w SA1RAM.framerule
@@ -159,9 +154,15 @@ gamemode_savestate:
 	JMP savestate_end
 
 ppuoff:
-	LDA #$80 : STA $2100
-	STZ $4200
-	RTS
+	LDA.b #$80 : STA.w $2100
+	STZ.w $4200
+	STZ.w $420C
+	RTL
+
+ppuon:
+	LDA.b #$0F : STA.b $13
+	LDA.b #$81 : STA.w $4200
+	RTL
 
 DMA_BWRAMSRAM:
 	PLX : STX.w $4328
@@ -194,6 +195,7 @@ DMA_BWRAMSRAM:
 	BRA .next
 
 .sa1stuff
+	PHB
 	LDA.b #$00
 	XBA
 	LDA.b #(SA1IRAM.savethis_end-SA1IRAM.savethis_start)-1
@@ -213,6 +215,8 @@ DMA_BWRAMSRAM:
 
 .done
 	LDX.w $4328 : PHX
+	LDA.w $4338 : PHA
+	PLB
 	RTS
 
 .address_size
@@ -303,7 +307,7 @@ gamemode_oob:
 
 gamemode_skip_text:
 	SEP #$20
-	LDA #$04 : STA $1CD4
+	LDA.b #$04 : STA.w $1CD4
 	RTL
 
 gamemode_disable_sprites:
@@ -371,7 +375,8 @@ gamemode_fill_everything:
 
 	LDA.b $10
 	CMP.b #$0C
-	BEQ .nopal
+	BNE .nopal
+
 	STZ.w $15 ; prevent palettes from redrawing if we're in the practice menu
 
 .nopal
@@ -428,10 +433,10 @@ gamemode_fill_everything:
 	dw $F368 : db $FF ; every map
 	dw $F369 : db $FF ; more maps
 
-	dw $F36D : db $A0 ; 20 hearts
-	dw $F36C : db $98 ; 1 less than max health
+	dw $F36D : db $98 ; 1 less than max health
+	dw $F36C : db $A0 ; 20 hearts
 
-	dw $F36E : db $7C ; full magic - 4
+	dw $F36E : db $78 ; full magic - 8
 
 	dw $F370 : db 7   ; max bomb upgrades
 	dw $F371 : db 7   ; max arrow upgrades
@@ -452,14 +457,14 @@ gamemode_fill_everything:
 
 	dl 0 ; end
 
-
 gamemode_reset_segment_timer:
 	REP #$20
 	STZ.w SA1IRAM.SEG_TIME_F
 	STZ.w SA1IRAM.SEG_TIME_S
 	STZ.w SA1IRAM.SEG_TIME_M
 	SEP #$20
-	RTS
+	LDA.b #$02 : TSB.w SA1IRAM.TIMER_FLAG
+	RTL
 
 gamemode_fix_vram:
 	REP #$20

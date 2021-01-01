@@ -64,26 +64,6 @@ org $00821B
 	ORA.w $009B ; 16-bit addressing to save 1 cycle by avoiding a NOP
 
 warnpc $0089DF
-; Unused $17 function repurposed
-org $008C8A
-	dw NMI_UpdatePracticeHUD ; $17=0x06
-
-org $00EA79 ; seems unused
-NMI_UpdatePracticeHUD:
-	REP #$20
-	LDX #$80 : STX $2115
-	LDA #$6C00 : STA $2116
-
-	LDA #$1801 : STA $4300
-	LDA.w #SA1RAM.MENU : STA $4302
-	LDX.b #SA1RAM.MENU>>16 : STX $4304
-	LDA #$0800 : STA $4305
-
-	LDX #$01 : STX $420B
-	SEP #$20
-	RTS
-
-warnpc $00EAE5
 
 ; The time this routine takes isn't relevant
 ; since it's never during game play
@@ -111,7 +91,7 @@ nmi_expand:
 	SEP #$30
 	LDA.b $12 : STA.w SA1IRAM.CopyOf_12
 
-	LDA #$10
+	LDA #$12 ; timers NMI
 	STA.w $2200
 	RTL
 
@@ -234,3 +214,183 @@ OAM_Cleaner:
 	%OAMVClear($D0)
 	%OAMVClear($E0)
 	%OAMVClear($F0)
+
+;===============================================================================
+; Custom NMI for hud
+;===============================================================================
+NMI_RequestFullMenuUpdate:
+	REP #$20
+	LDA.w #NMI_UpdatePracticeHUD_full
+	STA.w SA1RAM.SNES_NMI_VECTOR
+	SEP #$30
+	RTL
+
+NMI_Request2RowsUpdate:
+	REP #$20
+	SEP #$10
+
+	LDA.w #NMI_UpdatePracticeHUD_two_rows
+	STA.w SA1RAM.SNES_NMI_VECTOR
+
+	STX.w SA1RAM.SNES_NMI_args+0
+	STY.w SA1RAM.SNES_NMI_args+1
+
+	SEP #$30
+	RTL
+
+NMI_UpdatePracticeHUD:
+.full
+	REP #$20
+
+	LDA.w #SA1RAM.MENU : STA.w $4302
+	LDA.w #$6C00 : STA.w $2116
+	LDA.w #$0800
+
+.start
+	STA.w $4305
+	LDA.w #$1801 : STA.w $4300
+
+	SEP #$20
+	LDA.b #$80 : STA.w $2115
+	STZ.w $4304
+	LDA.b #$01 : STA.w $420B
+
+	RTS
+
+.two_rows
+	REP #$20
+	LDA.w SA1RAM.SNES_NMI_args+0
+	JSR .do_row
+
+	REP #$20
+	LDA.w SA1RAM.SNES_NMI_args+1
+
+.do_row
+	AND.w #$00FF
+	ASL
+	ASL
+	ASL
+	ASL
+	ASL
+	PHA
+	ADC.w #$6D00
+	STA.w $2116
+
+	PLA
+	ASL
+	ADC.w #SA1RAM.MENU
+	STA.w $4302
+
+	LDA.w #$0040
+	BRA .start
+
+SNES_ENABLE_CUSTOM_NMI:
+	REP #$20
+	LDA.w #SNES_CUSTOM_NMI_nothing
+	STA.l SA1RAM.SNES_NMI_VECTOR
+
+	SEP #$20
+	LDA.b #$11
+	STA.l $002200
+	RTL
+
+SNES_DISABLE_CUSTOM_NMI:
+	SEP #$20
+	LDA.b #$10
+	STA.l $002200
+	RTL
+
+SNES_CUSTOM_NMI:
+	REP #$30
+	PHA
+	PHX
+	PHY
+	PHD
+	PHB
+
+	SEP #$20
+	LDA.l $004210
+
+	PEA.w $0000
+	PLD
+	TDC
+	TAX
+
+	PHK
+	PLB
+
+	STA.l $00420C ; disable HDMA aggressively
+
+	LDA.b #$80
+	STA.w $2100
+
+	LDA.b $12
+	BEQ .good_to_go
+
+	JMP .lagging
+
+.good_to_go
+	INC.b $12
+	JSR.w (SA1RAM.SNES_NMI_VECTOR, X)
+
+	PEA.w $0000 ; used to be D=0 later
+	PEA.w $2100
+	PLD
+
+	PHK
+	PLB
+
+	SEP #$30
+	LDA.b #$04 ; only show BG3
+	STA.b $212C
+	STZ.b $212D
+
+	; BG 3 scroll
+	LDA.b #$01
+	STZ.b $2111
+	STA.b $2111
+
+	STZ.b $2112
+	STA.b $2112
+
+	STZ.b $2106 ; no mosaic
+
+	; TODO hud colors
+
+	STZ.b $2123 ; no windowing
+	STZ.b $2124
+	STZ.b $2125
+
+	STZ.b $212E
+	STZ.b $212F
+
+	STZ.b $2131 ; no color math
+
+	; handle music and sfx
+	LDX.b #3
+
+--	LDA.w $012C, X
+	STA.b $40, X
+	STZ.w $012C, X
+	DEX
+	BPL --
+
+	PLD ; D=0000
+
+	JSL ReadJoyPad_long
+
+
+	REP #$20
+	LDA.w #.nothing
+	STA.w SA1RAM.SNES_NMI_VECTOR
+
+.lagging
+	SEP #$20
+	LDA.b #$0F
+	STA.l $002100
+	JMP.w SA1NMI_EXIT
+
+.nothing
+	RTS
+
+HUD_ACCENT_COLOR: dw $0000

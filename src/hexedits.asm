@@ -4,7 +4,6 @@ if stringsequal("!VERSION", "DEBUG")
 endif
 
 !VERSIONTEXT += !VERSION
-!DEBUGGING ?= 0
 
 pushtable
 cleartable
@@ -16,14 +15,9 @@ db "ALTTPRAC !VERSIONTEXT"
 warnpc $00FFD5
 pulltable
 
-; SA-1
-org $00FFD5 : db $23, $35
-
-; ROM Size
-org $00FFD7 : db 11 ; 2mb
-
-; SRAM Size
-org $00FFD8 : db select(!DEBUGGING, 7, 8) ; 256k
+org $00FFD5 : db $23, $35 ; SA-1
+org $00FFD7 : db 11 ; 2mb ROM
+org $00FFD8 : db 8 ; 256k SRAM
 
 pushtable
 table ../resources/fileselecttop.tbl
@@ -61,8 +55,8 @@ pulltable
 ; Overrides the following
 ; $008044: A5 F6  LDA $F6
 ; $008046: 29 10  AND #$10
-org $008044
-	LDA $F7 : AND.b #$00
+;org $008044
+;	LDA $F7 : AND.b #$00
 
 ; == BAGE CHEAT CODE ==
 ;

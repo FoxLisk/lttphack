@@ -32,6 +32,7 @@ org $0794DB : JSL UpdateOnOWPitTransition
 org $04E8CF : JSL UpdateOnOWToSpecial
 org $04E966 : JSL UpdateOnSpecialToOW
 org $1EEED8 : JSL UpdateOnWhirlPool
+org $1EEE83 : JSL UpdateOnOWMirror
 org $1BC209 : JSL UpdateOnBombableWallOW
 org $08E06A : JSL UpdateOnFlute
 
@@ -52,20 +53,17 @@ org $0EFB90
 	LDA $F4 ; vanilla pointlessly used absolute; dp is better
 	JSL idle_waitkey ; now we have an easy 4 bytes here for the JSL
 
-
 ; EndMessage
-org $0efbbb
+org $0EFBBB
 	JSL idle_endmessage
 
 ; MenuActive
 org $0DDF1E
 	JSL idle_menu
 
-
 ; BottleMenu
 org $0DE0E2
 	JSL idle_menu
-
 
 !reset = $42
 !update = $02
@@ -79,11 +77,11 @@ macro reset_timer()
 	LDA #$41 : STA.w SA1IRAM.TIMER_FLAG
 endmacro
 
-StupidMVN:
-	LDA #$80 : TSB.w SA1IRAM.TIMER_FLAG
-	REP #$30
-	LDA #$0149
-	RTL
+;StupidMVN:
+;	LDA #$80 : TSB.w SA1IRAM.TIMER_FLAG
+;	REP #$30
+;	LDA #$0149
+;	RTL
 
 ; Underworld updates
 UpdateOnUWTransition:

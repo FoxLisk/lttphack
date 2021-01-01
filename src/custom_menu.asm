@@ -100,13 +100,13 @@ CM_DrawMenu:
 	PHA
 	PLB
 
-	%ppu_off()
+	JSL ppuoff
 	JSR cm_transfer_tileset
 	JSR cm_redraw_clean
 	STZ.w $2121 ; CGRAM 0
 	STZ.w $2122 ; black
 	STZ.w $2122
-	%ppu_on()
+	JSL ppuon
 
 	; play sound effect for opening menu
 	LDA.b #$14 : STA $012E
@@ -228,9 +228,9 @@ CM_Return:
 	INC.b $15
 
 	LDA.w SA1RAM.opened_menu_manually : BEQ .tileset_is_ok
-	%ppu_off()
+	JSL ppuoff
 	JSL load_default_tileset
-	%ppu_on()
+	JSL ppuon
 
 .tileset_is_ok
 	STZ.w SA1RAM.opened_menu_manually
@@ -277,16 +277,16 @@ cm_init_item_variables:
 	LDA.b #$01
 
 .store_bow
-	STA.w SA1RAM.cm_item_bow
+	STA.w SA1RAM.list_item_bow
 
 	; Bottle
 	LDA.l !ram_item_bottle : BEQ .store_bottle
 	LDA.b #$01
 .store_bottle
-	STA.w SA1RAM.cm_item_bottle
+	STA.w SA1RAM.list_item_bottle
 
 	; Mirror
-	LDA.l !ram_item_mirror : LSR : STA.w SA1RAM.cm_item_mirror
+	LDA.l !ram_item_mirror : LSR : STA.w SA1RAM.list_item_mirror
 
 	; MaxHP
 	LDA.l !ram_equipment_maxhp
@@ -620,6 +620,7 @@ cm_execute_action_table:
 	dw cm_execute_submenu_variable
 	dw cm_execute_movie
 	dw cm_execute_toggle_bit
+	dw cm_execute_nothing
 
 cm_execute_toggle:
 	; Will only toggle the first bit.
@@ -635,6 +636,8 @@ cm_execute_toggle:
 	PHA
 	LDA #$1D : STA $012F ; magic boop
 	PLA
+
+cm_execute_nothing:
 	RTS
 
 cm_execute_toggle_jsr:
@@ -892,7 +895,6 @@ cm_execute_ctrl_shortcut:
 	REP #$20
 	LDA ($00) : STA $35 : INC $00 : INC $00
 	LDA ($00) : STA $37 : INC $00
-	LDA #!ram_ctrl_prachack_menu : CMP $35 : BEQ .end
 
 	SEP #$20
 	BIT $F6 : BVS .reset_shortcut
@@ -1021,7 +1023,7 @@ cm_draw_action_table:
 	dw cm_draw_submenu_variable
 	dw cm_draw_movie
 	dw cm_draw_toggle_bit_customtext
-
+	dw cm_draw_ctrl_shortcut
 
 macro item_index_to_vram_index()
 	; Assumes AI=16

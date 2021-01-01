@@ -1,3 +1,6 @@
+!SRAM_VERSION = $0030
+!INIT_SIGNATURE = $25A4
+
 ;==============================================================================
 ; Memory map:
 ; Bank 40:
@@ -23,8 +26,11 @@ struct BWRAM40 $400000
 endstruct
 
 struct SA1RAM $406000
-	.HUD: skip $800 ; bg3 HUD
-	.MENU: skip $800 ; practice menu
+	.HUD skip $800 ; bg3 HUD
+	.MENU skip $800 ; practice menu
+
+	.SNES_NMI_VECTOR: skip 4
+	.SNES_NMI_args: skip 8
 
 	.SW_BUFFER:
 	.SW_BUFFER_r0: skip 64
@@ -47,6 +53,8 @@ struct SA1RAM $406000
 	.hex2dec_third_digit: skip 2
 
 	.rng_counter: skip 2
+	.rng_cache: skip 1
+	.frame_cache: skip 1
 	.pokey_rng: skip 2
 	.agahnim_rng: skip 2
 	.helmasaur_rng: skip 2
@@ -78,10 +86,8 @@ struct SA1RAM $406000
 	.cm_old_submode: skip 1
 	.ctrl_last_input: skip 2
 
-	.cm_menu_stack: skip $10
-	.cm_menu_bank_stack: skip $10
-	.cm_cursor_stack: skip $20
-	.cm_stack_index: skip $20
+	.CM_SubMenuIndex: skip 2
+	.CM_SubMenuStack: skip 40
 
 .end_of_clearable_sa1ram:
 
@@ -89,11 +95,12 @@ struct SA1RAM $406000
 	.cm_input_timer: skip 2
 	.opened_menu_manually: skip 2
 
-	.cm_item_bow: skip 1
-	.cm_item_bottle: skip 1
-	.cm_item_mirror: skip 1
+	.list_item_bow: skip 1
+	.list_item_bottle: skip 1
+	.list_item_mirror: skip 1
 	.cm_equipment_maxhp: skip 1
 	.cm_old_crystal_switch: skip 2
+	.cm_crystal_switch: skip 2
 	.cm_gamestate_world: skip 2
 
 	.movie_hud: skip $40
@@ -116,12 +123,10 @@ endmacro
 ; Magic words
 SA1SRAM = $400000
 
-!SRAM_VERSION = $002A
+
 
 !menu_end = #$0000
 !list_end = #$FF
-
-!pracmenu_shortcut = #$1010
 
 !EMPTY = $207F
 !QMARK = $212A
@@ -167,12 +172,12 @@ endmacro
 
 macro def_sram(name, default)
 	!ram_<name> #= !offset+!offsetinc
-	!newval := "LDA.w #<default> : STA.l !ram_<name>"
+	!newval := "dw !ram_<name>, <default>"
 
-	if defined("INIT_ASSEMBLY")
-		!INIT_ASSEMBLY := "!INIT_ASSEMBLY : !newval"
+	if defined("TEMP_INIT")
+		!TEMP_INIT := "!TEMP_INIT : !newval"
 	else
-		!INIT_ASSEMBLY := "!newval"
+		!TEMP_INIT := "!newval"
 	endif
 
 	!offsetinc #= !offsetinc+2
@@ -180,7 +185,7 @@ endmacro
 
 macro def_perm_sram(name, default)
 	!ram_<name> #= !offset+!offsetinc
-	!newval := "LDA.w #<default> : STA.l !ram_<name>"
+	!newval := "dw !ram_<name>, <default>"
 
 	if defined("PERM_INIT")
 		!PERM_INIT := "!PERM_INIT : !newval"
@@ -191,27 +196,52 @@ macro def_perm_sram(name, default)
 	!offsetinc #= !offsetinc+2
 endmacro
 
-%def_sram("sram_initialized", !OFF)
+%def_sram("sram_initialized", !SRAM_VERSION)
 
-; permanent SRAM that works across versions
+; permanent SRAM that doesn't reinit across versions
 ; DO NOT CHANGE THE ORDER OF THESE
-%def_perm_sram("ctrl_prachack_menu", $1010)
+%def_perm_sram("init_sig", !INIT_SIGNATURE)
+
 %def_perm_sram("ctrl_load_last_preset", $20A0)
 %def_perm_sram("ctrl_replay_last_movie", $3020)
 %def_perm_sram("ctrl_save_state", $1060)
 %def_perm_sram("ctrl_load_state", $2060)
+
 %def_perm_sram("ctrl_toggle_oob", !OFF)
 %def_perm_sram("ctrl_skip_text", !OFF)
 %def_perm_sram("ctrl_disable_sprites", !OFF)
 %def_perm_sram("ctrl_reset_segment_timer", !OFF)
+
 %def_perm_sram("ctrl_fill_everything", !OFF)
 %def_perm_sram("ctrl_fix_vram", !OFF)
 %def_perm_sram("ctrl_somaria_pits", !OFF)
+
 %def_perm_sram("preset_category", $0000)
+
 %def_perm_sram("hud_font", 0)
 %def_perm_sram("input_display", !ON)
 %def_perm_sram("heart_display", !ON)
 %def_perm_sram("feature_music", !ON)
+
+%def_perm_sram("counters_real", !ON)
+%def_perm_sram("counters_lag", !ON)
+%def_perm_sram("counters_idle", !ON)
+%def_perm_sram("counters_segment", !OFF)
+
+%def_perm_sram("qw_toggle", !ON)
+%def_perm_sram("xy_toggle", !ON)
+%def_perm_sram("heartlag_spinner", !OFF)
+%def_perm_sram("extra_ram_watch", !OFF)
+
+%def_perm_sram("enemy_hp_toggle", !OFF)
+%def_perm_sram("lit_rooms_toggle", !OFF)
+%def_perm_sram("fast_moving_walls", !OFF)
+%def_perm_sram("probe_toggle", !OFF)
+
+%def_perm_sram("sanctuary_heart",!OFF)
+%def_perm_sram("rerandomize_toggle", !ON)
+%def_perm_sram("skip_triforce_toggle", !OFF)
+%def_perm_sram("bonk_items_toggle", !OFF)
 
 ; Placeholders for future SRAM
 ; this way, future updates will end up in one of these
@@ -254,8 +284,6 @@ endmacro
 
 ; Non permanent SRAM
 ; these can be moved around
-%def_sram("qw_toggle", !OFF)
-
 %def_sram("previous_preset_destination", !OFF)
 %def_sram("previous_preset_type", !OFF)
 %def_sram("autoload_preset", !OFF)
@@ -263,32 +291,9 @@ endmacro
 %def_sram("lagometer_toggle", !OFF)
 %def_sram("toggle_lanmola_cycles", !ON)
 
-%def_sram("xy_toggle", !ON)
-%def_sram("counters_real", !ON)
-%def_sram("counters_lag", !ON)
-%def_sram("counters_idle", !ON)
-%def_sram("counters_segment", !OFF)
-%def_sram("heartlag_spinner", !OFF)
-%def_sram("extra_ram_watch", !OFF)
 %def_sram("superwatch", !OFF)
 
-%def_sram("rerandomize_framecount", 0)
-%def_sram("rerandomize_rng", 0)
-
-%def_sram("enemy_hp_toggle", !OFF)
-%def_sram("lit_rooms_toggle", !OFF)
-%def_sram("fast_moving_walls", !OFF)
-%def_sram("probe_toggle", !OFF)
-%def_sram("sanctuary_heart",!OFF )
-%def_sram("rerandomize_toggle", !ON)
-%def_sram("skip_triforce_toggle", !OFF)
-%def_sram("bonk_items_toggle", !OFF)
-
 !lowram_oob_toggle = $037F
-
-
-
-
 
 ;-------------------------
 ; Transition detection
@@ -325,8 +330,7 @@ endmacro
 !CM_ACTION_SUBMENU_VARIABLE = #$16
 !CM_ACTION_MOVIE = #$18
 !CM_ACTION_TOGGLE_BIT_TEXT = #$1A
-
-
+!CM_ACTION_CTRL_SHORTCUT_FINAL = #$1C
 
 
 ;-------------------------
@@ -447,19 +451,3 @@ LoadGearPalettes_bunny = $02FD8A
 !ram_game_flags = $7EF3C6
 !ram_game_map_indicator = $7EF3C7
 !ram_capabilities = $7EF379
-
-;-------------------------
-; Macros
-;-------------------------
-
-macro ppu_off()
-	LDA #$80 : STA $2100 : STA $13
-	STZ $420C : LDA $9B : PHA : STZ $9B
-	STZ $4200
-endmacro
-
-macro ppu_on()
-	LDA #$81 : STA $4200
-	LDA #$0F : STA $13 : STA $2100
-	PLA : STA $9B : STA $420C
-endmacro

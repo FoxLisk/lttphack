@@ -17,11 +17,11 @@ cm_submenu_link_state:
 cm_link_state_armed_waterwalk:
 	dw !CM_ACTION_CHOICE
 	dl $5B
-	%cm_item("Waterwalk")
-	%cm_item("Unarmed")
-	%cm_item("Armed")
-	%cm_item("Armed (2)")
-	%cm_item("Deathholed")
+	%list_item("Waterwalk")
+	%list_item("Unarmed")
+	%list_item("Armed")
+	%list_item("Armed (2)")
+	%list_item("Deathholed")
 	db !list_end
 	
 cm_link_state_statue_drag:
@@ -70,10 +70,10 @@ cm_link_state_armed_eg:
 cm_link_state_eg_strength:
 	dw !CM_ACTION_CHOICE
 	dl $7E044A
-	%cm_item("EG strength")
-	%cm_item("EG 0")
-	%cm_item("Strong")
-	%cm_item("Weak")
+	%list_item("EG strength")
+	%list_item("EG 0")
+	%list_item("Strong")
+	%list_item("Weak")
 	db !list_end
 
 cm_link_state_searchindex:

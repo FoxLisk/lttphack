@@ -14,9 +14,30 @@ struct SA1IRAM $003000
 	.CopyOf_F6: skip 1
 	.CopyOf_F4: skip 1
 
+	.cm_submodule: skip 2
+	.cm_cursor: skip 1 ; keep these together
+	.cm_current_menu: skip 4
+	.cm_select_current: skip 4
+	.cm_select_draw: skip 4
+	.cm_select_address: skip 4
+	.cm_select_params:
+	.cm_draw_color: skip 2
+	.cm_draw_type_offset: skip 2
+	.cm_draw_filler: skip 2
+
+	; these can be shared because they're never used at the same time
+	.cm_writer:
+	.cm_leftright: skip 1 ; N=left V=right
+	.cm_updown: skip 1 ; N=up V=down
+	.cm_shoulder: skip 1 ; N=l V=r
+	.cm_ax: skip 1 ; N=A V=X
+
+	.cm_writer_args: skip 2
+
 .savethis_start
 	.TIMER_FLAG: skip 2
 
+.timers_start
 	.ROOM_TIME_F: skip 2
 	.ROOM_TIME_S: skip 2
 	.ROOM_TIME_LAG: skip 2
@@ -25,6 +46,7 @@ struct SA1IRAM $003000
 	.SEG_TIME_F: skip 2
 	.SEG_TIME_S: skip 2
 	.SEG_TIME_M: skip 2
+.timers_end
 
 	.ROOM_TIME_F_DISPLAY: skip 2
 	.ROOM_TIME_S_DISPLAY: skip 2
@@ -168,6 +190,18 @@ SA1NMI00:
 SA1IRQ00:
 	JML SA1IRQ
 
+SNES_CUSTOM_NMI_BOUNCE:
+	JML SNES_CUSTOM_NMI
+
+warnpc $00F800
+
+org $00FFB7 ; this barely fits
+ReadJoyPad_long:
+--	LSR.w $4212
+	BCS --
+	JSR.w $0083D1
+	RTL
+
 incsrc sa1hud.asm
 incsrc sa1sram.asm
 
@@ -300,9 +334,19 @@ InitSA1:
 	STA.w $2229
 	STZ.w $2228
 
-	STZ.w $2200
+	REP #$20
+	STZ.b $F0
+	STZ.b $F2
+	STZ.b $F4
+	STZ.b $F6
+	STZ.w SA1IRAM.CopyOf_F0
+	STZ.w SA1IRAM.CopyOf_F2
+	STZ.w SA1IRAM.CopyOf_F4
+	STZ.w SA1IRAM.CopyOf_F6
 
 	STZ.w SA1IRAM.SHORTCUT_USED
+	STZ.w $2200
+
 	SEP #$30
 	LDA.b #$81
 	STA.w $4200
@@ -325,23 +369,26 @@ SA1Reset:
 	PHK
 	PLB
 
+	LDA.w #SNES_CUSTOM_NMI_BOUNCE ; set up custom NMI vector
+	STA.w $220C
+
 	SEP #$30
+	STZ.w $2209 ; but don't use it
+	STZ.w $2210
+
 	STZ.w $2230
 	STZ.w $2231
 
-	STZ.w $2209
-	STZ.w $2210
-
-	LDA #$80
+	LDA.b #$80
 	STA.w $2227
 
 	LDA.b #$03
 	STA.w $2225 ; image 3 for page $60
 
-	LDA #$FF
+	LDA.b #$FF
 	STA.w $222A
 
-	LDA #$F0
+	LDA.b #$F0
 	STA.w $220B
 
 	LDA.b #$90
@@ -355,11 +402,10 @@ SA1Reset:
 	DEX
 	BPL --
 
---	;WAI
-	BRA --
+--	BRA --
 
 ; SA1IRAM.TIMER_FLAG bitfield:
-; 7 - timers have been set and are awaiing a hud update
+; 7 - timers have been set and are awaiting a hud update
 ; 6 - reset timer
 ; 5
 ; 4
@@ -373,10 +419,51 @@ SA1NMI:
 	PHX
 	PHY
 	PHD
+	PHB
 
-	SEP #$2C ; a=8, BCD=on, SEI
+	SEP #$30
 	LDA.b #$10
 	STA.l $00220B
+
+	PHK
+	PLB
+
+	LDA.w $2301
+	AND.b #$03
+	ASL
+	TAX
+
+
+	JSR.w (.nmis, X)
+
+#SA1NMI_EXIT:
+	REP #$30
+	PLB
+	PLD
+	PLY
+	PLX
+	PLA
+	RTI
+
+.nmis
+	dw .disable_custom_nmi
+	dw .enable_custom_nmi
+	dw SA1NMI_COUNTERS
+	dw .nothing_at_all
+
+.disable_custom_nmi
+	STZ.w $2209
+
+.nothing_at_all
+	RTS
+
+.enable_custom_nmi
+	LDA.b #$10
+	STA.w $2209
+	RTS
+
+SA1NMI_COUNTERS:
+	SED
 
 	;LDA.w SA1RAM.last_frame_did_saveload : BEQ .update_counters
 	;JMP .dont_update_counters
@@ -390,8 +477,7 @@ SA1NMI:
 	LDA.b SA1IRAM.ROOM_TIME_LAG : ADC.w #$0000 ; carry set from $12 being 1
 	STA.b SA1IRAM.ROOM_TIME_LAG
 
-	; cycle controlled room time
-	SEP #$21 ; include carry
+	SEP #$21 ; include carry so we can do +0+1
 	LDA.b SA1IRAM.ROOM_TIME_F : ADC.b #$00
 	CMP.b #$60
 	BCC .rtFOK
@@ -442,11 +528,12 @@ SA1NMI:
 	BIT.b SA1IRAM.TIMER_FLAG
 	REP #$30
 
-	LDA #$000F ; transferring 16 bytes
-	LDX.w #SA1IRAM.ROOM_TIME_F+$0F
-	LDY.w #SA1IRAM.ROOM_TIME_F_DISPLAY+$0F
+	LDA.w #SA1IRAM.timers_end-SA1IRAM.timers_start-1
 
-	MVP $00,$00
+	LDX.w #SA1IRAM.ROOM_TIME_F
+	LDY.w #SA1IRAM.ROOM_TIME_F_DISPLAY
+
+	MVN $00,$00
 
 	BVC .dontreset
 
@@ -461,12 +548,7 @@ SA1NMI:
 	STA.b SA1IRAM.TIMER_FLAG
 
 .donothing
-++	REP #$30
-	PLD
-	PLY
-	PLX
-	PLA
-	RTI
+++	RTS
 
 ; For everything not a timer
 SA1IRQ:
@@ -482,10 +564,9 @@ SA1IRQ:
 	SEP #$30
 
 	LDA.b #$80
-	STA.w $220B
+	STA.l $00220B
 
-	LDA.b #SA1IRQ>>16
-	PHA
+	PHK
 	PLB
 
 	LDA.w $2301 ; get IRQ type
@@ -553,7 +634,6 @@ gamemode_shortcuts:
 
 .nextcheck
 	LDA.w .shortcut_routine, X
-	CMP.w #$FFFF
 	BEQ ..nothingused
 
 	STA.b SA1IRAM.SCRATCH+0
@@ -569,6 +649,8 @@ gamemode_shortcuts:
 	LDA.w .shortcut_routine+2, X
 	BPL ..forsnes
 
+..forsa1
+	JSL UseShortCutSA1
 	RTS
 
 ..forsnes
@@ -600,11 +682,11 @@ gamemode_shortcuts:
 	dw !ram_ctrl_toggle_oob, gamemode_oob&!CPU_SIDE
 	dw !ram_ctrl_skip_text, gamemode_skip_text&!CPU_SIDE
 	dw !ram_ctrl_disable_sprites, gamemode_disable_sprites&!CPU_SIDE
-	dw $FFFF, $FFFF
+	dw 0, 0
 
+#final_static_short_PracMenuShortcut:
 ..pracmenushortcut
-	dw !pracmenu_shortcut
-
+	dw $1010
 
 ; return values in P
 !SOME_SAFE = $8080 ; some options are not always safe = negative flag
@@ -630,13 +712,13 @@ check_mode_safety:
 	SEP #$20
 	LDA.b (SA1IRAM.SCRATCH), Y ; get safety level of submodule
 	STA.b SA1IRAM.SCRATCH ; put it in $00
-	LDA.b SA1IRAM.CopyOf_7EC011 : BEQ .safe ; check mosaics
+	LDY.b SA1IRAM.CopyOf_7EC011 : BEQ .safe ; check mosaics
 
 	LDA.b #!SOME_SAFE ; not safe
 	RTS
 
 .safe
-	LDA.b SA1IRAM.SCRATCH : BIT.b SA1IRAM.SCRATCH ; bit test to set NVZ
+	BIT.b SA1IRAM.SCRATCH ; bit test to set NVZ
 	RTS
 
 Module_safety:
@@ -698,22 +780,3 @@ Module_safety:
 		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !NONE_SAFE ; 0x00, 0x01, 0x02, 0x03
 		db !ALL_SAFE, !ALL_SAFE, !ALL_SAFE, !NONE_SAFE ; 0x04, 0x05, 0x06, 0x07
 		db !ALL_SAFE, !NONE_SAFE, !ALL_SAFE, !ALL_SAFE ; 0x08, 0x09, 0x0A, 0x0B
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
