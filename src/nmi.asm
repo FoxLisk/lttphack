@@ -445,30 +445,21 @@ SNES_CUSTOM_NMI:
 	RTS
 
 .cgrams
-	db 00 : dw HUD_BG_COLOR ; BG color of screen
-	db 03 : dw HUD_BG_COLOR ; BG color of screen
+	db 00 : dw !ram_hud_bg
+	db 03 : dw !ram_hud_bg
 
-	db 17 : dw HUD_HEADER_HL
-	db 18 : dw HUD_HEADER_FG
-	db 19 : dw HUD_BG_COLOR
+	db 17 : dw !ram_hud_header_hl
+	db 18 : dw !ram_hud_header_fg
+	db 19 : dw !ram_hud_header_bg
 
-	db 22 : dw HUD_SELECTED_FG
-	db 23 : dw HUD_SELECTED_BG
+	db 22 : dw !ram_hud_sel_fg
+	db 23 : dw !ram_hud_sel_bg
 
-	db 26 : dw HUD_UNSELECT_FG
-	db 27 : dw HUD_BG_COLOR
+	db 26 : dw !ram_hud_dis_fg
+	db 27 : dw !ram_hud_bg
 
 	db $FF ; done
 
 
 
-HUD_BG_COLOR: dw color($000000)
 
-HUD_HEADER_FG: dw color($F8F8F8)
-HUD_HEADER_HL: dw color($F83838)
-
-HUD_SELECTED_BG: dw color($C8C8F8)
-HUD_SELECTED_FG: dw color($000090)
-
-HUD_UNSELECT_BG: dw color($000000)
-HUD_UNSELECT_FG: dw color($686868)

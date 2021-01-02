@@ -173,6 +173,7 @@ CMDO_PERFORM_FUNC:
 	PHK
 	PEA.w .return-1
 
+	SEP #$30
 	JML.w [SA1IRAM.cm_writer]
 
 .return

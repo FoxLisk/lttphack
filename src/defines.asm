@@ -244,6 +244,14 @@ endmacro
 %def_perm_sram("skip_triforce_toggle", !OFF)
 %def_perm_sram("bonk_items_toggle", !OFF)
 
+%def_perm_sram("hud_bg", 0)
+%def_perm_sram("hud_header_fg", 1)
+%def_perm_sram("hud_header_hl", 10)
+%def_perm_sram("hud_header_bg", 0)
+%def_perm_sram("hud_sel_fg", 8)
+%def_perm_sram("hud_sel_bg", 9)
+%def_perm_sram("hud_dis_fg", 3)
+
 ; Placeholders for future SRAM
 ; this way, future updates will end up in one of these
 ; instead of say, a preset thing

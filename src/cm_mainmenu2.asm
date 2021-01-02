@@ -258,7 +258,7 @@ macro cm_toggle_bit_customtext(name, addr, bitx, addrtext)
 #?here:
 endmacro
 
-macro cm_togglebit_customtext_here(name, addr, bitx)
+macro cm_toggle_bit_customtext_here(name, addr, bitx)
 	%cm_toggle_bit_customtext(<name>, <addr>, <bitx>, this)
 	%list_header(2)
 endmacro
@@ -296,7 +296,7 @@ macro cm_toggle_bit_long_customtext(name, addr, bitx, addrtext)
 #?here:
 endmacro
 
-macro cm_togglebit_long_customtext_here(name, addr, bitx)
+macro cm_toggle_bit_long_customtext_here(name, addr, bitx)
 	%cm_toggle_bit_long_customtext(<name>, <addr>, <bitx>, this)
 	%list_header(2)
 endmacro
