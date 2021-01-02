@@ -238,6 +238,21 @@ NMI_Request2RowsUpdate:
 	SEP #$30
 	RTL
 
+NMI_RequestCurrentRowUpdateUnless:
+	REP #$20
+
+	LDA.w SA1RAM.SNES_NMI_VECTOR
+	CMP.w #NMI_UpdatePracticeHUD_full
+	BEQ .no
+
+	LDA.w #NMI_UpdatePracticeHUD_current_row
+	STA.w SA1RAM.SNES_NMI_VECTOR
+
+.no
+	SEP #$30
+	RTL
+
+
 NMI_UpdatePracticeHUD:
 .full
 	REP #$20
@@ -257,6 +272,11 @@ NMI_UpdatePracticeHUD:
 
 	RTS
 
+.current_row
+	REP #$20
+	LDA.w SA1IRAM.cm_cursor
+	BRA .do_row
+
 .two_rows
 	REP #$20
 	LDA.w SA1RAM.SNES_NMI_args+0
@@ -273,12 +293,12 @@ NMI_UpdatePracticeHUD:
 	ASL
 	ASL
 	PHA
-	ADC.w #$6D00
+	ADC.w #$6C60
 	STA.w $2116
 
 	PLA
 	ASL
-	ADC.w #SA1RAM.MENU
+	ADC.w #SA1RAM.MENU+(64*3)
 	STA.w $4302
 
 	LDA.w #$0040
@@ -355,8 +375,6 @@ SNES_CUSTOM_NMI:
 
 	STZ.b $2106 ; no mosaic
 
-	; TODO hud colors
-
 	STZ.b $2123 ; no windowing
 	STZ.b $2124
 	STZ.b $2125
@@ -377,8 +395,41 @@ SNES_CUSTOM_NMI:
 
 	PLD ; D=0000
 
-	JSL ReadJoyPad_long
+	; Refresh colors every frame just cause it's easier
+	REP #$10
+	LDX.w #0
 
+
+.next_color
+	LDA.w .cgrams, X
+	BMI .done_color
+
+	INX
+	STA.w $2121
+
+	LDY.w .cgrams, X
+	INX
+	INX
+
+	STY.b $00
+	LDA.b ($00)
+	STA.w $2122
+
+	INY
+	STY.b $00
+	LDA.b ($00)
+	STA.w $2122
+
+	BRA .next_color
+
+.done_color
+	SEP #$30
+
+
+	JSL ReadJoyPad_long
+	REP #$10
+	SEP #$20
+	JSL CacheSA1Stuff
 
 	REP #$20
 	LDA.w #.nothing
@@ -393,4 +444,31 @@ SNES_CUSTOM_NMI:
 .nothing
 	RTS
 
-HUD_ACCENT_COLOR: dw $0000
+.cgrams
+	db 00 : dw HUD_BG_COLOR ; BG color of screen
+	db 03 : dw HUD_BG_COLOR ; BG color of screen
+
+	db 17 : dw HUD_HEADER_HL
+	db 18 : dw HUD_HEADER_FG
+	db 19 : dw HUD_BG_COLOR
+
+	db 22 : dw HUD_SELECTED_FG
+	db 23 : dw HUD_SELECTED_BG
+
+	db 26 : dw HUD_UNSELECT_FG
+	db 27 : dw HUD_BG_COLOR
+
+	db $FF ; done
+
+
+
+HUD_BG_COLOR: dw color($000000)
+
+HUD_HEADER_FG: dw color($F8F8F8)
+HUD_HEADER_HL: dw color($F83838)
+
+HUD_SELECTED_BG: dw color($C8C8F8)
+HUD_SELECTED_FG: dw color($000090)
+
+HUD_UNSELECT_BG: dw color($000000)
+HUD_UNSELECT_FG: dw color($686868)

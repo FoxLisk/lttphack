@@ -165,8 +165,8 @@ preset_deinit_current_state:
 
 	LDA #$81 : STA $4200 ; disable IRQ
 
-	LDA.w SA1RAM.cm_old_gamemode : CMP #$0E : BNE .not_message_module
-	LDA.w SA1RAM.cm_old_submode : CMP #$02 : BNE .not_message_module
+	LDA.b $10 : CMP #$0E : BNE .not_message_module
+	LDA.b $11 : CMP #$02 : BNE .not_message_module
 
 	JSR preset_deinit_dialog_mode
 

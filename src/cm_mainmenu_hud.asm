@@ -1,17 +1,13 @@
 HUDEXTRAS_SUBMENU:
-%cm_header("HUD extras", 12)
+	%cm_header("HUD EXTRAS", 12)
 
 ;===============================================================================
-%cm_choice("Health display", !ram_heart_display, this)
-
-%list_header(2)
+%cm_choice_here("Health display", !ram_heart_display, 2)
 	%list_item("Numerical")
 	%list_item("Vanilla")
 
 ;===============================================================================
-%cm_choice("Input display", !ram_input_display, this)
-
-%list_header(4)
+%cm_choice_here("Input display", !ram_input_display, 4)
 	%list_item("Off")
 	%list_item("Graphical")
 	%list_item("Classic")
@@ -33,9 +29,7 @@ HUDEXTRAS_SUBMENU:
 %cm_toggle("Segment time", !ram_counters_segment)
 
 ;===============================================================================
-%cm_choice("Coordinates", !ram_xy_toggle, this)
-
-%list_header(3)
+%cm_choice_here("Coordinates", !ram_xy_toggle, 3)
 	%list_item("Off")
 	%list_item("3 digits")
 	%list_item("4 digits")
@@ -47,9 +41,7 @@ HUDEXTRAS_SUBMENU:
 %cm_toggle("Lanmola cycs", !ram_toggle_lanmola_cycles)
 
 ;===============================================================================
-%cm_choice("RAM watch", !ram_extra_ram_watch, this)
-
-%list_header(5)
+%cm_choice_here("RAM watch", !ram_extra_ram_watch, 5)
 	%list_item("Off")
 	%list_item("Subpixels")
 	%list_item("Spooky altit")
@@ -57,30 +49,28 @@ HUDEXTRAS_SUBMENU:
 	%list_item("Icebreaker")
 
 ;===============================================================================
-%cm_choice_func("Super Watch", !ram_superwatch, 3, this, SuperWatchToggleFunc)
-
-%list_header(3)
+%cm_choice_func_here("Super Watch", !ram_superwatch, 3, SuperWatchToggleFunc)
 	%list_item("Off")
 	%list_item("Ancillae")
 	%list_item("UW Glitches")
 
 ;===============================================================================
 %cm_toggle_func("Enemy HP", !ram_enemy_hp_toggle, this)
-
+.aaaaa
 	SEP #$30
 
 	LDA.b #$02
 	LDX.w !ram_enemy_hp_toggle
-	BEQ .unset
+	BEQ ..unset
 
-.set
+..set
 	TSB.b !ram_extra_sa1_required
-	BRA .done
+	BRA ..done
 
-.unset
+..unset
 	TRB.b !ram_extra_sa1_required
 
-.done
+..done
 	RTL
 
 ;===============================================================================

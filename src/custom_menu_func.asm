@@ -1,0 +1,260 @@
+
+CMDO_SAVE_ADDRESS_LONG:
+	JSR .continue
+
+	LDA.b [SA1IRAM.cm_current_selection], Y
+	STA.b SA1IRAM.cm_writer+2
+	INY
+	RTS
+
+#CMDO_SAVE_ADDRESS_00:
+	SEP #$20
+	STZ.b SA1IRAM.cm_writer+2
+
+.continue
+	REP #$20
+	LDA.b [SA1IRAM.cm_current_selection], Y
+	INY
+	INY
+
+	STA.b SA1IRAM.cm_writer+0
+
+	SEP #$20
+
+ACTION_EXIT:
+CMDO_HEADER:
+	RTS
+
+;===============================================================================
+
+CMDO_TOGGLE_BIT0:
+CMDO_TOGGLE_BIT0_CUSTOMTEXT:
+	LDA.b #$1<<0 : BRA CMDO_TOGGLE_BIT_LOCAL
+
+CMDO_TOGGLE_BIT1:
+CMDO_TOGGLE_BIT1_CUSTOMTEXT:
+	LDA.b #$1<<1 : BRA CMDO_TOGGLE_BIT_LOCAL
+
+CMDO_TOGGLE_BIT2:
+CMDO_TOGGLE_BIT2_CUSTOMTEXT:
+	LDA.b #$1<<2 : BRA CMDO_TOGGLE_BIT_LOCAL
+
+CMDO_TOGGLE_BIT3:
+CMDO_TOGGLE_BIT3_CUSTOMTEXT:
+	LDA.b #$1<<3 : BRA CMDO_TOGGLE_BIT_LOCAL
+
+CMDO_TOGGLE_BIT4:
+CMDO_TOGGLE_BIT4_CUSTOMTEXT:
+	LDA.b #$1<<4 : BRA CMDO_TOGGLE_BIT_LOCAL
+
+CMDO_TOGGLE_BIT5:
+CMDO_TOGGLE_BIT5_CUSTOMTEXT:
+	LDA.b #$1<<5 : BRA CMDO_TOGGLE_BIT_LOCAL
+
+CMDO_TOGGLE_BIT6:
+CMDO_TOGGLE_BIT6_CUSTOMTEXT:
+	LDA.b #$1<<6 : BRA CMDO_TOGGLE_BIT_LOCAL
+
+CMDO_TOGGLE_BIT7:
+CMDO_TOGGLE_BIT7_CUSTOMTEXT:
+	LDA.b #$1<<7 : BRA CMDO_TOGGLE_BIT_LOCAL
+
+CMDO_TOGGLE_BIT_LONG:
+	PHA
+	JSR CMDO_SAVE_ADDRESS_LONG
+	BRA .continue
+
+#CMDO_TOGGLE_BIT_LOCAL:
+	PHA
+	JSR CMDO_SAVE_ADDRESS_00
+
+.continue
+	PLA
+	BIT.b SA1IRAM.cm_ax
+	BMI .toggle
+	BVS .clear
+
+	CLC
+	RTS
+
+.clear
+	EOR.b #$FF
+	STA.b SA1IRAM.cm_writer_args+1 ; get complement for the AND
+	STZ.b SA1IRAM.cm_writer_args+0 ; ORA in nothing
+
+	JMP CMDO_PERFORM_TOGGLE
+
+.toggle
+	STA.b SA1IRAM.cm_writer_args+0
+
+	LDA.b #$FF
+	STA.b SA1IRAM.cm_writer_args+1
+
+	JMP CMDO_PERFORM_TOGGLE
+
+CMDO_TOGGLE_BIT7_LONG:
+CMDO_TOGGLE_BIT7_LONG_CUSTOMTEXT:
+	LDA.b #$1<<7 : BRA CMDO_TOGGLE_BIT_LONG
+
+CMDO_TOGGLE_BIT6_LONG:
+CMDO_TOGGLE_BIT6_LONG_CUSTOMTEXT:
+	LDA.b #$1<<6 : BRA CMDO_TOGGLE_BIT_LONG
+
+CMDO_TOGGLE_BIT5_LONG:
+CMDO_TOGGLE_BIT5_LONG_CUSTOMTEXT:
+	LDA.b #$1<<5 : BRA CMDO_TOGGLE_BIT_LONG
+
+CMDO_TOGGLE_BIT4_LONG:
+CMDO_TOGGLE_BIT4_LONG_CUSTOMTEXT:
+	LDA.b #$1<<4 : BRA CMDO_TOGGLE_BIT_LONG
+
+CMDO_TOGGLE_BIT3_LONG:
+CMDO_TOGGLE_BIT3_LONG_CUSTOMTEXT:
+	LDA.b #$1<<3 : BRA CMDO_TOGGLE_BIT_LONG
+
+CMDO_TOGGLE_BIT2_LONG:
+CMDO_TOGGLE_BIT2_LONG_CUSTOMTEXT:
+	LDA.b #$1<<2 : BRA CMDO_TOGGLE_BIT_LONG
+
+CMDO_TOGGLE_BIT1_LONG:
+CMDO_TOGGLE_BIT1_LONG_CUSTOMTEXT:
+	LDA.b #$1<<1 : BRA CMDO_TOGGLE_BIT_LONG
+
+CMDO_TOGGLE_BIT0_LONG:
+CMDO_TOGGLE_BIT0_LONG_CUSTOMTEXT:
+	LDA.b #$1<<0 : BRA CMDO_TOGGLE_BIT_LONG
+
+CMDO_TOGGLE_LONG:
+	JSR CMDO_SAVE_ADDRESS_LONG
+	BRA .continue
+
+#CMDO_TOGGLE:
+	JSR CMDO_SAVE_ADDRESS_00
+
+.continue
+	SEP #$20
+
+	LDA.b #$01
+	STA.b SA1IRAM.cm_writer_args+0
+	STA.b SA1IRAM.cm_writer_args+1
+
+CMDO_PERFORM_TOGGLE:
+	SEP #$21 ; set the carry here, since that means something happened
+	LDA.b [SA1IRAM.cm_writer]
+	EOR.b SA1IRAM.cm_writer_args+0
+	AND.b SA1IRAM.cm_writer_args+1
+	STA.b [SA1IRAM.cm_writer]
+
+	JMP CM_MenuSFX_toggle
+
+;===============================================================================
+CMDO_TOGGLE_FUNC:
+CMDO_TOGGLE_FUNC_CUSTOMTEXT:
+	JSR CMDO_TOGGLE
+	BRA CMDO_PERFORM_FUNC
+
+CMDO_TOGGLE_LONG_FUNC:
+CMDO_TOGGLE_LONG_FUNC_CUSTOMTEXT:
+	JSR CMDO_TOGGLE_LONG
+	BRA CMDO_PERFORM_FUNC
+
+CMDO_FUNC:
+	SEP #$20
+	LDA.b SA1IRAM.cm_ax ; get A press in carry
+	ASL
+
+; jump here for anything with an attached function
+; expects Y to point to the current function argument
+; carry means a function should happen
+CMDO_PERFORM_FUNC:
+	BCC .exit
+
+	JSR CMDO_SAVE_ADDRESS_LONG
+	PHK
+	PEA.w .return-1
+
+	JML.w [SA1IRAM.cm_writer]
+
+.return
+	JSR CM_MenuSFX_switch
+
+.exit
+	RTS
+
+CMDO_CHOICE_LONG_FUNC:
+CMDO_CHOICE_LONG_FUNC_PRGTEXT:
+	JSR CMDO_CHOICE_LONG
+	BRA CMDO_PERFORM_FUNC
+
+#CMDO_CHOICE_FUNC:
+#CMDO_CHOICE_FUNC_PRGTEXT:
+	JSR CMDO_CHOICE
+	BRA CMDO_PERFORM_FUNC
+
+;===============================================================================
+
+CMDO_CHOICE_LONG:
+CMDO_CHOICE_LONG_PRGTEXT:
+	JSR CMDO_SAVE_ADDRESS_LONG
+	BRA .continue
+
+#CMDO_CHOICE:
+#CMDO_CHOICE_PRGTEXT:
+	JSR CMDO_SAVE_ADDRESS_00
+
+.continue
+	LDA.b [SA1IRAM.cm_writer]
+	BIT.b SA1IRAM.cm_ax
+	BVS .clear
+	BMI .increment
+
+	BIT.b SA1IRAM.cm_leftright
+	BMI .decrement
+	BVS .increment
+	INY
+	CLC ; carry clear = nothing actionable, so no functions
+	RTS
+
+.decrement
+	CMP.b #$00
+	BEQ .max
+
+	DEC
+	BRA .set
+
+.max
+	LDA.b [SA1IRAM.cm_current_selection], Y
+	BRA .set
+
+.increment
+	INC
+	CMP.b [SA1IRAM.cm_current_selection], Y
+	BCC .set
+
+.clear
+	LDA.b #$00
+
+.set
+	STA.b [SA1IRAM.cm_writer]
+	INY
+	SEC ; carry set = actionable, so do functions
+	RTS
+
+;===============================================================================
+CMDO_SUBMENU:
+
+
+
+	JMP CM_MenuSFX_submenu
+
+
+CMDO_PRESET:
+CMDO_SUBMENU_VARIABLE:
+CMDO_NUMFIELD:
+CMDO_NUMFIELD_LONG:
+CMDO_NUMFIELD_FUNC:
+CMDO_NUMFIELD_LONG_FUNC:
+CMDO_CTRL_SHORTCUT:
+CMDO_CTRL_SHORTCUT_FINAL:
+
+

@@ -82,8 +82,6 @@ struct SA1RAM $406000
 	.preset_end_of_sram_state: skip 2
 	.preset_spotlight_timer: skip 2
 
-	.cm_old_gamemode: skip 1
-	.cm_old_submode: skip 1
 	.ctrl_last_input: skip 2
 
 	.CM_SubMenuIndex: skip 2
@@ -93,6 +91,7 @@ struct SA1RAM $406000
 
 	.last_frame_input: skip 2
 	.cm_input_timer: skip 2
+	.cm_last_input: skip 2
 	.opened_menu_manually: skip 2
 
 	.list_item_bow: skip 1
@@ -146,6 +145,8 @@ macro def_SA1_control(name, size)
 endmacro
 
 %def_SA1_control("stating", 1)
+
+function color(h) = ((((h&$FF)/8)<<10)|(((h>>8&$FF)/8)<<5)|(((h>>16&$FF)/8)<<0))
 
 ; ==== RAM usage ====
 ;

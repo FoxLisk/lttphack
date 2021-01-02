@@ -17,8 +17,8 @@ struct SA1IRAM $003000
 	.cm_submodule: skip 2
 	.cm_cursor: skip 1 ; keep these together
 	.cm_current_menu: skip 4
-	.cm_select_current: skip 4
-	.cm_select_draw: skip 4
+	.cm_current_selection: skip 4
+	.cm_current_draw: skip 4
 	.cm_select_address: skip 4
 	.cm_select_params:
 	.cm_draw_color: skip 2
@@ -29,8 +29,8 @@ struct SA1IRAM $003000
 	.cm_writer:
 	.cm_leftright: skip 1 ; N=left V=right
 	.cm_updown: skip 1 ; N=up V=down
-	.cm_shoulder: skip 1 ; N=l V=r
 	.cm_ax: skip 1 ; N=A V=X
+	.cm_shoulder: skip 1 ; N=l V=r
 
 	.cm_writer_args: skip 2
 

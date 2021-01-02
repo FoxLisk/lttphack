@@ -17,9 +17,7 @@ CONFIG_SUBMENU:
 %cm_toggle("Death reload", !ram_autoload_preset)
 
 ;===============================================================================
-%cm_choice("Preset cat", !ram_preset_category, this)
-
-%list_header(7)
+%cm_choice_here("Preset cat", !ram_preset_category, 7)
 	%list_item("NMG")
 	%list_item("Hundo")
 	%list_item("Low")
@@ -29,9 +27,7 @@ CONFIG_SUBMENU:
 	%list_item("Any RMG")
 
 ;===============================================================================
-%cm_choice("HUD font", !ram_hud_font, this)
-
-%list_header(24)
+%cm_choice_here("HUD font", !ram_hud_font, 24)
 	%list_item("Classic")
 	%list_item("Normal")
 	%list_item("Italic")

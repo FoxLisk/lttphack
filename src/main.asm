@@ -29,8 +29,10 @@ table ../resources/normal.tbl
 ;incsrc custom_menu.asm
 incsrc cm_mainmenu2.asm
 incsrc custom_menu2.asm
-incsrc cm_mainmenu_actions.asm
+incsrc custom_menu_draw.asm
+incsrc custom_menu_func.asm
 incsrc cm_mainmenu_hud.asm
+;incsrc cm_mainmenu_gamestate.asm
 
 org $268000
 incsrc presets.asm

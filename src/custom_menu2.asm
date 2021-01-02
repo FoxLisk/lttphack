@@ -1,8 +1,6 @@
-; TODO: custom CGRAM colors for inverted selection also characters like %
-; move thicker alphabet down 1 tile in VRAM so that it can be ORA'd in
-!SELECTED = 0
-!UNSELECTED = 0
-!HEADER = $0060
+!SELECTED = $3400
+!UNSELECTED = $3800
+!HEADER = $3060
 
 cm_preset_data_banks:
 CM_Main:
@@ -15,7 +13,15 @@ CM_Main:
 
 	JSL SNES_ENABLE_CUSTOM_NMI
 
+	JSR CM_PrepPPU
+	JSR CM_CacheWRAM
+
 	REP #$20
+	STZ.w SA1IRAM.CONTROLLER_1
+	STZ.w SA1IRAM.CONTROLLER_1_FILTERED
+	LDA.w #15
+	STA.w SA1RAM.cm_input_timer
+
 	LDA.b SA1IRAM.cm_submodule
 	CMP.w #2
 	BEQ .fine
@@ -43,14 +49,13 @@ CM_Main:
 	dw CM_Init
 	dw CM_DrawMenu
 	dw CM_Active
-	dw CM_ShortcutConfig
 	dw CM_Return
+	dw CM_ShortcutConfig
 
 CM_DrawMenu:
 	LDX.b #$04
 	STX.b SA1IRAM.cm_submodule
 	JMP DrawCurrentMenu
-	RTS
 
 CM_Return:
 	REP #$20
@@ -62,32 +67,58 @@ CM_Return:
 	SEP #$20
 	PLD
 	PLB
-	INC.b $12
+
+	
+	STZ.w $4200
+	LDA.b #$80
+	STA.w $2100
+
+	JSL load_default_tileset
+
+	SEP #$30
+	LDA.w SA1RAM.preset_type
+	BEQ .no_preset
+
+	;JSL preset_load_next_frame
+	BRA ++
+
+.no_preset
 	LDA.b #$15 : STA.w $012E
 
-	JML SNES_DISABLE_CUSTOM_NMI
+++	INC.b $12
+	INC.b $15 ; trigger a CGRAM update
+	JSL SNES_DISABLE_CUSTOM_NMI
+
+	LDA.b #$81 : STA.w $4200
+	RTL
 
 CM_ShortcutConfig:
 	RTS
 
-CM_Init:
-	LDA.b #$01 : STA.w SA1RAM.opened_menu_manually
-
-
-	REP #$20
-	STZ.w SA1RAM.CM_SubMenuIndex
-
-	LDA.w #cm_mainmenu<<8
-	STA.b SA1IRAM.cm_cursor+0
-
-	LDA.w #cm_mainmenu>>8
-	STA.b SA1IRAM.cm_cursor+2
-
-	JSR CM_PushMenuToStack
-
+CM_PrepPPU:
 	SEP #$30
 
+	LDA.b #$80 : STA.w $2100
+	STZ.w $4200
+
+	; transfer menu tileset
+	REP #$10
+	; word-access, incr by 1
+	LDA #$80 : STA $2115
+
+	LDX #$7000 : STX $2116 ; VRAM address (E000 in vram)
+	LDX #cm_hud_table : STX $4302 ; Source offset
+	LDA #cm_hud_table>>16 : STA $4304 ; Source bank
+	LDX #$0900 : STX $4305 ; Size (0x10 = 1 tile)
+	LDA #$01 : STA $4300 ; word, normal increment (DMA MODE)
+	LDA #$18 : STA $4301 ; destination (VRAM write)
+	LDA #$01 : STA $420B ; initiate DMA (channel 1)
+	RTS
 	; save temp variables that the menu uses
+
+CM_CacheWRAM:
+	SEP #$30
+
 	; Crystal Switch state
 	LDA.l $7EC172 : STA.w SA1RAM.cm_old_crystal_switch
 
@@ -113,25 +144,20 @@ CM_Init:
 
 	LDA.l $7EC172 : AND #$01 : STA.w SA1RAM.cm_crystal_switch
 
-	SEP #$30
+	RTS
 
-	LDA.b #$80 : STA.w $2100
-	STZ.w $4200
+CM_Init:
+	REP #$20
+	STZ.w SA1RAM.CM_SubMenuIndex
 
-	; transfer menu tileset
-	REP #$10
-	; word-access, incr by 1
-	LDA #$80 : STA $2115
+	LDA.w #cm_mainmenu<<8
+	STA.b SA1IRAM.cm_cursor+0
 
-	LDX #$7000 : STX $2116 ; VRAM address (E000 in vram)
-	LDX #cm_hud_table : STX $4302 ; Source offset
-	LDA #cm_hud_table>>16 : STA $4304 ; Source bank
-	LDX #$0900 : STX $4305 ; Size (0x10 = 1 tile)
-	LDA #$01 : STA $4300 ; word, normal increment (DMA MODE)
-	LDA #$18 : STA $4301 ; destination (VRAM write)
-	LDA #$01 : STA $420B ; initiate DMA (channel 1)
+	LDA.w #cm_mainmenu>>8
+	STA.b SA1IRAM.cm_cursor+2
 
-;------------------------------------------------------------------------------
+	JSR CM_PushMenuToStack
+
 	; blank the whole menu
 	REP #$20
 	SEP #$10
@@ -154,19 +180,13 @@ CM_Init:
 	INX
 	BPL .loop
 
-	JSR DrawCurrentMenu
-
-	SEP #$20
-	STZ.w $2121 ; CGRAM 0
-	STZ.w $2122 ; black
-	STZ.w $2122
+	SEP #$30
 
 	LDA.b #$14 : STA.w $012E
 
 	LDA.b #$02 : STA.b SA1IRAM.cm_submodule
+	STZ.w SA1RAM.cm_input_timer
 
-
-ActionExit:
 	RTS
 
 ;===============================================================================
@@ -208,11 +228,25 @@ CM_MenuSFX:
 	PLP
 	RTS
 
+CM_BackToTipTop:
+	JSR EmptyCurrentMenu
 
+	SEP #$20 ; bring us back to index 4 so that it will be before topmost
+	LDA.b #$4
+	STA.b SA1RAM.CM_SubMenuIndex
+
+	JSR CM_GetTopMostFromStack
+
+	STZ.b SA1IRAM.cm_cursor
+	JMP DrawCurrentMenu
+
+CM_ExitTime:
+	LDA.b #$06
+	STA.b SA1IRAM.cm_submodule
+	RTS
 
 CM_Active:
 	SEP #$30
-
 	LDY.b SA1IRAM.cm_cursor
 
 	JSR CM_getcontroller
@@ -222,9 +256,17 @@ CM_Active:
 	BIT.b SA1IRAM.cm_updown
 	BMI .pressed_up
 	BVS .pressed_down
+
+	; start is lowest priority
+	LDA.b SA1IRAM.CopyOf_F4
+	BIT.b #$10
+	BNE CM_ExitTime
+	BIT.b #$20
+	BNE CM_BackToTipTop
 	RTS
 
 .pressed_up
+
 	DEC.b SA1IRAM.cm_cursor
 	BRA CM_AdjustForWrap
 
@@ -234,10 +276,17 @@ CM_Active:
 
 .actionable_action
 	LDY.b #1 ; for when the routine uses it
-	LDA.b [SA1IRAM.cm_select_current], Y
+	LDA.b [SA1IRAM.cm_current_selection]
 	ASL
 	TAX
-	JMP (ActionDoRoutines, X)
+
+	JSR (ActionDoRoutines, X)
+
+	SEP #$30
+	LDY.b SA1IRAM.cm_cursor
+	JSR DrawCurrentRow_ShiftY
+	JSL NMI_RequestCurrentRowUpdateUnless
+	RTS
 
 CM_AdjustForWrap:
 	PHY
@@ -284,6 +333,8 @@ CM_AdjustForWrap:
 	SEP #$20
 	TYA
 	LSR
+	DEC
+	DEC
 
 .reset_too_far
 	STA.b SA1IRAM.cm_cursor
@@ -298,7 +349,15 @@ CM_ReDrawCursorPosition:
 	SEP #$10
 	LDY.b SA1IRAM.cm_cursor
 	PHY
+
 	JSR DrawCurrentRow_ShiftY
+	JSR CM_UpdateCurrentSelection
+
+	PLY
+	PLX
+	JSL NMI_Request2RowsUpdate
+
+	RTS
 
 CM_UpdateCurrentSelection:
 	REP #$20
@@ -309,19 +368,11 @@ CM_UpdateCurrentSelection:
 	TAY
 
 	LDA.b [SA1IRAM.cm_current_menu], Y
-	STA.b SA1IRAM.cm_select_current+0
-	INY
-	INY
-	LDA.b [SA1IRAM.cm_current_menu], Y
-	STA.b SA1IRAM.cm_select_current+2
+	STA.b SA1IRAM.cm_current_selection+0
 
-	PLY
-	PLX
-	JSL NMI_Request2RowsUpdate
-
+	LDY.b SA1IRAM.cm_current_menu+2
+	STY.b SA1IRAM.cm_current_selection+2
 	RTS
-
-
 
 
 
@@ -331,57 +382,36 @@ CM_UpdateCurrentSelection:
 ; Zero  = No actions
 ;===============================================================================
 CM_getcontroller:
-	SEP #$20
-	LDA.w SA1RAM.cm_input_timer
-	BEQ .get_controller
-
-	DEC.w SA1RAM.cm_input_timer
-
-.no_press
-	STZ.b SA1IRAM.cm_leftright
-	STZ.b SA1IRAM.cm_updown
-	STZ.b SA1IRAM.cm_shoulder
-	STZ.b SA1IRAM.cm_ax
-	LDA.b #$00
-	CLC
-	RTS
-
-.get_controller
 	REP #$20
+	STZ.b SA1IRAM.cm_leftright
+	STZ.b SA1IRAM.cm_ax
+
 	LDA.b SA1IRAM.CONTROLLER_1
-	BEQ .no_press
 
-	SEP #$20
+	CMP.w SA1RAM.cm_last_input
+	STA.w SA1RAM.cm_last_input
 
-	LDA.b #15
+	BEQ .same_as_last_frame
+
+	PHA
+	LDA.w #15
 	STA.w SA1RAM.cm_input_timer
+	PLA
 
-	; get left and right
-	LDA.b SA1IRAM.CopyOf_F0
-	LSR
-	ROR.b SA1IRAM.cm_leftright
-	LSR
-	ROR.b SA1IRAM.cm_leftright
+	CMP.b SA1IRAM.CONTROLLER_1_FILTERED
+	SEP #$20
+	BNE .no_presses
 
-	; get up and down
-	LDA.b SA1IRAM.CopyOf_F0
-	LSR
-	ROR.b SA1IRAM.cm_updown
-	LSR
-	ROR.b SA1IRAM.cm_updown
+.handle_all_new
+	JSR .repeatables ; get udlrLR
 
 	; get A and X, but only new presses
 	LDA.b SA1IRAM.CopyOf_F6
 	ASL
+	ROL
 	ROR.b SA1IRAM.cm_ax
-	ASL
+	ROR
 	ROR.b SA1IRAM.cm_ax
-
-	; get l and r, but only new presses
-	ASL
-	ROR.b SA1IRAM.cm_shoulder
-	ASL
-	ROR.b SA1IRAM.cm_shoulder
 
 	; get new B presses
 	LDA.b SA1IRAM.CopyOf_F4
@@ -394,6 +424,56 @@ CM_getcontroller:
 	AND.b #$C0
 
 	RTS
+
+.same_as_last_frame
+	CMP.w #$0001
+	SEP #$22 ; set zero flag
+	BCS .holding_buttons
+	RTS
+
+.holding_buttons
+	LDA.w SA1RAM.cm_input_timer
+	BEQ .continue
+
+	DEC
+	STA.w SA1RAM.cm_input_timer
+	BRA .no_presses
+
+.continue
+	LDA.b #4
+	STA.w SA1RAM.cm_input_timer
+
+.repeatables
+	; get left and right
+	LDA.b SA1IRAM.CopyOf_F0
+	LSR
+	ROR.b SA1IRAM.cm_leftright
+	LSR
+	ROR.b SA1IRAM.cm_leftright
+
+	; get up and down
+	LSR
+	ROR.b SA1IRAM.cm_updown
+	LSR
+	ROR.b SA1IRAM.cm_updown
+
+	; get l and r, but only new presses
+	ASL
+	ROR.b SA1IRAM.cm_shoulder
+	ASL
+	ROR.b SA1IRAM.cm_shoulder
+
+	; get actionable presses
+.no_presses
+	LDA.b SA1IRAM.cm_leftright
+	ORA.b SA1IRAM.cm_shoulder
+	AND.b #$C0
+
+	CLC ; no B press
+	RTS
+
+
+
 
 ;===============================================================================
 CM_PushMenuToStack:
@@ -416,6 +496,8 @@ CM_PushMenuToStack:
 	INX
 	INX
 	STX.w SA1RAM.CM_SubMenuIndex
+
+	JSR CM_UpdateCurrentSelection
 
 	PLP
 	PLY
@@ -442,6 +524,8 @@ CM_GetTopMostFromStack:
 
 	LDA.w SA1RAM.CM_SubMenuStack+2, X
 	STA.b SA1IRAM.cm_cursor+2
+
+	JSR CM_UpdateCurrentSelection
 
 	PLP
 	PLY
@@ -492,7 +576,6 @@ EmptyCurrentMenu:
 
 .donedraw
 .doneclean
-	JSL NMI_RequestFullMenuUpdate
 	RTS
 
 #DrawCurrentMenu:
@@ -516,11 +599,16 @@ EmptyCurrentRow:
 	ASL #6
 	TAX
 
-.from_here_to_end
+	LDA.w #$0000
+	STA.b SA1IRAM.cm_draw_color
+	BRA .next_clean
 
+.from_here_to_end
+	REP #$20
 
 .next_clean
 	LDA.w #$207F
+	ORA.b SA1IRAM.cm_draw_color
 	STA.w SA1RAM.MENU, X
 	INX
 	INX
@@ -548,12 +636,15 @@ DrawCurrentRow_ShiftY:
 
 ; Y = index into thing where 0 = header
 DrawCurrentRow:
+	REP #$30
+	PHY ; save this
+
 	TYA
 	LSR
 
 	CLC
 	ASL #6
-	ADC.w #64+4 ; down 1 row + right 2
+	ADC.w #64+2 ; down 1 row + right 1
 
 	CPY.w #0
 	BEQ .headersstt
@@ -565,10 +656,10 @@ DrawCurrentRow:
 
 	; put location of our row's text into DP
 	LDA.b SA1IRAM.cm_current_menu+1
-	STA.b SA1IRAM.cm_select_draw+1
+	STA.b SA1IRAM.cm_current_draw+1
 
 	LDA.b [SA1IRAM.cm_current_menu], Y
-	STA.b SA1IRAM.cm_select_draw+0
+	STA.b SA1IRAM.cm_current_draw+0
 
 	TYA ; should it be gray or yellow?
 	LSR ; does it match our selection?
@@ -576,8 +667,10 @@ DrawCurrentRow:
 
 	BMI .header
 
+	SEP #$20
 	CMP.b SA1IRAM.cm_cursor
-	BEQ .noselect
+	REP #$20
+	BNE .noselect
 
 .select
 	LDA.w #!SELECTED
@@ -593,11 +686,10 @@ DrawCurrentRow:
 .setcol
 	STA.b SA1IRAM.cm_draw_color
 
-	PHY ; save our row index
 	TYA
 	BEQ .isheader
 
-	LDA.b [SA1IRAM.cm_select_draw] ; what routine type is it?
+	LDA.b [SA1IRAM.cm_current_draw] ; what routine type is it?
 	AND.w #$00FF
 
 .isheader
@@ -620,10 +712,12 @@ DrawCurrentRow:
 
 	LDA.w #14 ; for determining the filler
 	STA.b SA1IRAM.cm_draw_filler
+	INX
+	INX
 
 	; write each letter of the name
 .next_letter
-	LDA.b [SA1IRAM.cm_select_draw], Y
+	LDA.b [SA1IRAM.cm_current_draw], Y
 	AND.w #$00FF
 	CMP.w #$00FF
 	BEQ .done_row_name
@@ -665,6 +759,8 @@ DrawCurrentRow:
 	DEC
 	PHA
 
+	SEP #$20 ; more useful
+	LDY.w #1 ; to skip the draw type
 	RTS
 
 .return
@@ -674,156 +770,3 @@ DrawCurrentRow:
 	PLY
 	RTS
 
-;===============================================================================
-; Menu Actions
-;===============================================================================
-CM_FUNCTION:
-	SEP #$30
-	LDY.b #1
-
-; jump here for anything with an attached function
-; expects Y to point to the current function argument
-#CM_ATTACHED_FUNCTION:
-	SEP #$30
-	INY
-	INY
-
-	; push the address to stack for a jump
-	LDA.b [SA1IRAM.cm_select_current], Y
-	PHA
-
-	DEY
-	LDA.b [SA1IRAM.cm_select_current], Y
-	PHA
-
-	DEY
-	LDA.b [SA1IRAM.cm_select_current], Y
-	DEC
-	PHA
-
-	RTL
-	RTS
-
-CM_DRAW_WORD:
-	PHP
-	REP #$30
-	PHY
-
-	PHB
-	PHK
-	PLB
-
-	PHA
-	LDY.w #0
-
-.next
-	LDA (1,S),Y
-	AND.w #$00FF
-	CMP.w #$00FF
-	BEQ .done
-
-	ORA.b SA1IRAM.cm_draw_color
-	STA.w SA1RAM.MENU, X
-	INX
-	INX
-	INY
-	BRA .next
-
-
-.done
-	PLA
-	PLB
-
-	REP #$30
-	PLY
-
-	PLP
-	RTS
-
-CM_DRAW_RANDOM:
-	REP #$20
-	LDA.w #.text
-	JSR CM_DRAW_WORD
-	RTL
-
-.text
-	db "RANDOM", $FF
-
-CM_DRAW_ON:
-	REP #$20
-	LDA.w #.text
-	JSR CM_DRAW_WORD
-	RTL
-
-.text
-	db "ON", $FF
-
-CM_DRAW_YES:
-	REP #$20
-	LDA.w #.text
-	JSR CM_DRAW_WORD
-	RTL
-
-.text
-	db "YES", $FF
-
-CM_DRAW_OFF:
-	REP #$20
-	LDA.w #.text
-	JSR CM_DRAW_WORD
-	RTL
-
-.text
-	db "OFF", $FF
-
-CM_DRAW_NO:
-	REP #$20
-	LDA.w #.text
-	JSR CM_DRAW_WORD
-	RTL
-
-.text
-	db "NO", $FF
-
-CM_DRAW_HEX:
-	SEP #$20
-	PHA
-
-	JSR .tohex
-	STA.w $0001
-
-	PLA
-	LSR
-	LSR
-	LSR
-	LSR
-	JSR .tohex
-	STA.w $0000
-
-	LDA.b #$FF
-	STA.w $0002
-
-	REP #$20
-	LDA.w #$0000
-	JSR CM_DRAW_WORD
-
-	RTL
-
-.tohex
-	AND.b #$0F
-	CMP.b #$0A
-	BCC .numeral
-
-	SBC.b #$0A
-	RTS
-
-.numeral
-	ORA.b #$20
-	RTS
-
-; All of these just empty the rest of the row
-CM_DRAW_HEADER:
-CM_DRAW_PRESET:
-CM_DRAW_SUBMENU:
-CM_DRAW_FUNC:
-	JMP EmptyCurrentRow_from_here_to_end

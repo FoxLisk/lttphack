@@ -1,64 +1,47 @@
-; GAME STATE {{{
+GAMESTATE_SUBMENU:
+%cm_header("GAMESTATE", 12)
 
-cm_main_goto_game_state:
-	%cm_submenu("Game state", cm_submenu_game_state)
+;===============================================================================
+%cm_func("Skip text", this)
+	LDA.b #$04
+	STA.w $1CD4
+	RTL
 
-cm_submenu_game_state:
-	dw cm_game_state_skip_text
-	dw cm_game_state_disable_sprites
-	dw cm_game_state_reset_screen
-	dw cm_game_state_goto_reset_dungeons_submenu
-	dw cm_game_state_goto_bosses_submenu
-	dw cm_game_state_goto_crystals_submenu
-	dw cm_game_state_goto_flags_submenu
-	dw cm_game_state_set_follower
-	dw cm_game_state_world
-	dw cm_game_state_progress
-	dw cm_game_state_map_indicator
-	dw cm_game_state_crystal_switch
-	dw !menu_end
-	%cm_header("GAME STATE")
+;===============================================================================
+%cm_func("Remove sprites", this)
+	SEP #$30
+	LDA #$22 : STA $012F
+	JML Sprite_DisableAll
 
-cm_game_state_world:
-	dw !CM_ACTION_TOGGLE_BIT_TEXT
-	dl SA1RAM.cm_gamestate_world
-	db $40
-	%list_item("World")
-	%list_item("Light World")
-	%list_item("Dark World")
-	db !list_end
+;===============================================================================
+%cm_func("Reset current room", this)
+	LDA $1B : BEQ ++
 
-cm_game_state_crystal_switch:
-	dw !CM_ACTION_CHOICE_JSR
-	dw .update_tilemap
-	dl !ram_cm_crystal_switch
-	%list_item("Switch Color")
-	%list_item("Red")
-	%list_item("Blue")
-	db !list_end
+	STZ $0400 : STZ $0401 : STZ $0402 : STZ $0403 : STZ $0408
+	LDA $A0 : ASL : TAX
+	LDA #$00 : STA $7EF000, X
+	BRA +
 
-.update_tilemap
-	STA $7EC172
-	CMP.w SA1RAM.cm_old_crystal_switch : BEQ .skip
+++	LDX $8A
+	LDA #$00 : STA $7EF280, X
 
-	LDA.w SA1RAM.cm_old_gamemode : CMP #$07 : BNE .done
-	LDA.w SA1RAM.cm_old_submode : BNE .done
++	LDA #$09 : STA $012F
+	RTL
 
-	LDA #$16 : STA.w SA1RAM.cm_old_submode
+;===============================================================================
+%cm_submenu("Reset dungeons", cm_game_reset_dungeons_submenu)
 
-	RTS
+;===============================================================================
+%cm_submenu("Toggle bosses defeated", cm_game_state_bosses_submenu)
 
-.skip
-	STZ.w SA1RAM.cm_old_submode
+;===============================================================================
+%cm_submenu("Pendants and crystals", cm_game_state_crystals_submenu)
 
-.done
-	RTS
+;===============================================================================
+%cm_submenu("Game flags", cm_submenu_game_state_flags)
 
-cm_game_state_set_follower:
-	dw !CM_ACTION_CHOICE_JSR
-	dw .update
-	dl $7EF3CC
-	%list_item("Follower")
+;===============================================================================
+%cm_choice_long_func_here("Follower", $7EF3CC, 15, $00D463)
 	%list_item("Lonely Link")
 	%list_item("Zelda")
 	%list_item("Garbage")
@@ -74,34 +57,103 @@ cm_game_state_set_follower:
 	%list_item("Purple chest")
 	%list_item("Super bomb")
 	%list_item("Sasha text")
-	db !list_end
 
-.update
-	PHP
-	SEP #$30
-	JSL $00D463
-	PLP
-	RTS
+;===============================================================================
+%cm_toggle_bit_customtext_here("World", SA1RAM.cm_gamestate_world, 2)
+	%list_item("Light World")
+	%list_item("Dark World")
 
+;===============================================================================
+%cm_choice_long_here("Progress", !ram_game_progress, 4)
+	%list_item("Started")
+	%list_item("Uncle")
+	%list_item("Zelda")
+	%list_item("Agahnim")
 
-cm_game_state_reset_screen:
-	%cm_jsr("Reset current room")
+;===============================================================================
+%cm_choice_long_here("Map indicator", !ram_game_map_indicator, 9)
+	%list_item("Castle")
+	%list_item("Kakariko")
+	%list_item("Sahasrahla")
+	%list_item("Pendants")
+	%list_item("MS")
+	%list_item("ATower")
+	%list_item("Darkness")
+	%list_item("Crystals")
+	%list_item("GTower")
 
-.routine
-	LDA $1B : BEQ .overworld
+;===============================================================================
+%cm_toggle_long_func_customtext_here("Switch Color", $7EC172, CrystalSwitchFn)
+	%list_item("Red")
+	%list_item("Blue")
 
-	STZ $0400 : STZ $0401 : STZ $0402 : STZ $0403 : STZ $0408
-	LDA $A0 : ASL : TAX
-	LDA #$00 : STA $7EF000, X
-	BRA .end
+; TODO this needs some special work for it
+#CrystalSwitchFn:
+	RTL
 
-.overworld
-	LDX $8A
-	LDA #$00 : STA $7EF280, X
+;===============================================================================
+cm_game_state_bosses_submenu:
+%cm_header("BOSSES DEFEATED", 12)
+	%cm_toggle_bit_long_customtext("Armos", $7EF191, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Lanmola", $7EF067, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Moldorm", $7EF00F, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Agahnim", $7EF041, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Helmasaur", $7EF0B5, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Blind", $7EF159, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Mothula", $7EF053, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Kholdstare", $7EF1BD, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Arrghus", $7EF00D, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Vitreous", $7EF121, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Trinexx", $7EF149, 7, bossalivetext)
+	%cm_toggle_bit_long_customtext("Agahnim 2", $7EF01B, 7, bossalivetext)
 
-.end
-	LDA #$09 : STA $012F
-	RTS
+#bossalivetext:
+%list_header(2)
+	%list_item("Alive")
+	%list_item("Dead")
+
+;===============================================================================
+cm_submenu_game_state_flags:
+%cm_header("GAME FLAGS", 6)
+	%cm_toggle_bit_long("Uncle dead", !ram_game_flags, 0)
+	%cm_toggle_bit_long("Sanc priest", !ram_game_flags, 1)
+	%cm_toggle_bit_long("Escaped", !ram_game_flags, 2)
+	%cm_toggle_bit_long("Uncle left", !ram_game_flags, 4)
+	%cm_toggle_bit_long("Aginah", !ram_game_flags, 5)
+	%cm_toggle_bit_long("Fortune cycle", !ram_game_flags, 6)
+
+;===============================================================================
+cm_game_state_crystals_submenu:
+%cm_header("PENDANTS AND CRYSTALS", 10)
+	%cm_toggle_bit_long("Eastern", !ram_game_pendants, 2)
+	%cm_toggle_bit_long("Desert", !ram_game_pendants, 1)
+	%cm_toggle_bit_long("Hera", !ram_game_pendants, 0)
+	%cm_toggle_bit_long("Darkness", !ram_game_crystals, 1)
+	%cm_toggle_bit_long("Thieves", !ram_game_crystals, 5)
+	%cm_toggle_bit_long("Skull", !ram_game_crystals, 6)
+	%cm_toggle_bit_long("Ice", !ram_game_crystals, 2)
+	%cm_toggle_bit_long("Swamp", !ram_game_crystals, 4)
+	%cm_toggle_bit_long("Mire", !ram_game_crystals, 0)
+	%cm_toggle_bit_long("Turtle Rock", !ram_game_crystals, 4)
+
+;===============================================================================
+cm_game_reset_dungeons_submenu:
+%cm_header("RESET DUNGEONS", 14)
+	%cm_func("Escape", reset_dungeon_func)
+	%cm_func("Eastern Palace", reset_dungeon_func)
+	%cm_func("Desert Palace", reset_dungeon_func)
+	%cm_func("Tower of Hera", reset_dungeon_func)
+	%cm_func("Agahnim's Tower", reset_dungeon_func)
+	%cm_func("Palace of Darkness", reset_dungeon_func)
+	%cm_func("Swamp Palace", reset_dungeon_func)
+	%cm_func("Skull Woods", reset_dungeon_func)
+	%cm_func("Thieves' Town", reset_dungeon_func)
+	%cm_func("Ice Palace", reset_dungeon_func)
+	%cm_func("Misery Mire", reset_dungeon_func)
+	%cm_func("Turtle Rock", reset_dungeon_func)
+	%cm_func("Ganon's Tower", reset_dungeon_func)
+	%cm_func("Other", reset_dungeon_func)
+
 
 !EX = $01 ; escape
 !EP = $02 ; eastern palace
@@ -122,82 +174,7 @@ cm_game_state_reset_screen:
 !CV = $FF ; caves and houses
 !UU = !CV ; unused caves, just for convenience
 
-macro reset_dungeon(dungeon, id)
-	dw !CM_ACTION_JSR
-	dw ?routine
-	db $24, "<dungeon>", #$FF
-
-?routine:
-	LDA #$09 : STA $012F
-	LDA #<id>
-	JMP reset_dungeon
-endmacro
-
-cm_game_state_goto_reset_dungeons_submenu:
-	%cm_submenu("Reset dungeons", cm_game_reset_dungeons_submenu)
-
-cm_game_reset_dungeons_submenu:
-	dw cm_game_state_dungeons_escape
-	dw cm_game_state_dungeons_eastern_palace
-	dw cm_game_state_dungeons_desert_palace
-	dw cm_game_state_dungeons_tower_of_hera
-	dw cm_game_state_dungeons_aga_tower
-	dw cm_game_state_dungeons_palace_of_darkness
-	dw cm_game_state_dungeons_swamp_palace
-	dw cm_game_state_dungeons_skull_woods
-	dw cm_game_state_dungeons_thieves_town
-	dw cm_game_state_dungeons_ice_palace
-	dw cm_game_state_dungeons_misery_mire
-	dw cm_game_state_dungeons_turtle_rock
-	dw cm_game_state_dungeons_ganons_tower
-	dw cm_game_state_dungeons_caves
-	dw !menu_end
-	%cm_header("RESET DUNGEONS")
-
-
-cm_game_state_dungeons_escape:
-	%reset_dungeon("Escape", !EX)
-
-cm_game_state_dungeons_eastern_palace:
-	%reset_dungeon("Eastern Palace", !EP)
-
-cm_game_state_dungeons_desert_palace:
-	%reset_dungeon("Desert Palace", !DP)
-
-cm_game_state_dungeons_tower_of_hera:
-	%reset_dungeon("Tower of Hera", !TH)
-
-cm_game_state_dungeons_aga_tower:
-	%reset_dungeon("Agahnim's Tower", !AT)
-
-cm_game_state_dungeons_palace_of_darkness:
-	%reset_dungeon("Palace of Darkness", !PD)
-
-cm_game_state_dungeons_swamp_palace:
-	%reset_dungeon("Swamp Palace", !SP)
-
-cm_game_state_dungeons_skull_woods:
-	%reset_dungeon("Skull Woods", !SW)
-
-cm_game_state_dungeons_thieves_town:
-	%reset_dungeon("Thieves' Town", !TT)
-
-cm_game_state_dungeons_ice_palace:
-	%reset_dungeon("Ice Palace", !IP)
-
-cm_game_state_dungeons_misery_mire:
-	%reset_dungeon("Misery Mire", !MM)
-
-cm_game_state_dungeons_turtle_rock:
-	%reset_dungeon("Turtle Rock", !TR)
-
-cm_game_state_dungeons_ganons_tower:
-	%reset_dungeon("Ganon's Tower", !GT)
-
-cm_game_state_dungeons_caves:
-	%reset_dungeon("Other", !CV)
-
-supertile_dungeons:
+#supertile_dungeons:
 	; eg1
 	dw !CV, !EX, !EX, !CV, !TR, !UU, !SP, !TH, !CV, !PD, !PD, !PD, !GT, !GT, !IP, !UU
 	dw !CV, !EX, !EX, !TR, !TR, !TR, !SP, !TH, !CV, !PD, !PD, !PD, !GT, !GT, !IP, !IP
@@ -221,203 +198,40 @@ supertile_dungeons:
 	dw !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV
 	dw !CV, !CV, !CV, !CV, !CV, !CV, !CV, !CV
 
-reset_dungeon:
-	PHB : PHK : PLB : PHP
+reset_dungeon_func:
+	PHB : PHK : PLB
+	PHD
+
+	LDY.b SA1IRAM.cm_cursor
+	LDX.w .list, Y
+
 	REP #$30
-	AND #$00FF
-	STA $00
 	LDA #$0000
+	TCD
+	STX.b $00
 
 	LDX.w #(256+40)*2 ; eg1 size + eg2 size, words
 
---	LDY supertile_dungeons, X
-	CPY $00 : BNE ++
-	STA $7EF000, X
+--	LDY.w supertile_dungeons, X
+	CPY.b $00 : BNE ++
+	STA.l $7EF000, X
 ++	DEX #2 : BPL --
 
 	; check current room
 	INC ; sets accum to #$0001
-	BIT $1B : BEQ ++ ; make sure we're indoors
+	BIT.b $1B : BEQ ++ ; make sure we're indoors
 
-	LDA $A0 : ASL : TAX
-	LDA supertile_dungeons, X
-	CMP $00 : BNE ++
-	STZ $0400 : STZ $0402 : STZ $0408
+	LDA.b $A0 : ASL : TAX
+	LDA.w supertile_dungeons, X
+	CMP.b $00 : BNE ++
+	STZ.w $0400 : STZ.w $0402 : STZ.w $0408
 
-++	PLP : PLB : RTS
+++	PLD
+	PLB
+	RTL
 
-cm_game_state_progress:
-	dw !CM_ACTION_CHOICE
-	dl !ram_game_progress
-	%list_item("Progress")
-	%list_item("Started")
-	%list_item("Uncle")
-	%list_item("Zelda")
-	%list_item("Agahnim")
-	db !list_end
-
-cm_game_state_map_indicator:
-	dw !CM_ACTION_CHOICE
-	dl !ram_game_map_indicator
-	%list_item("Map indicator")
-	%list_item("Castle")
-	%list_item("Kakariko")
-	%list_item("Sahasrahla")
-	%list_item("Pendants")
-	%list_item("MS")
-	%list_item("ATower")
-	%list_item("Darkness")
-	%list_item("Crystals")
-	%list_item("GTower")
-	db !list_end
-
-cm_game_state_goto_flags_submenu:
-	%cm_submenu("Game flags", cm_submenu_game_state_flags)
-
-cm_submenu_game_state_flags:
-	dw cm_game_state_flags_uncle
-	dw cm_game_state_flags_sanc_priest
-	dw cm_game_state_flags_escaped
-	dw cm_game_state_flags_uncle_left_home
-	dw cm_game_state_flags_talked_to_aginah
-	dw cm_game_state_flags_fortune_teller_cycle
-	dw !menu_end
-	%cm_header("GAME FLAGS")
-
-cm_game_state_flags_uncle:
-	%cm_toggle_bit("Uncle dead", !ram_game_flags, #$01)
-
-cm_game_state_flags_sanc_priest:
-	%cm_toggle_bit("Sanc priest", !ram_game_flags, #$02)
-
-cm_game_state_flags_escaped:
-	%cm_toggle_bit("Escaped", !ram_game_flags, #$04)
-
-cm_game_state_flags_uncle_left_home:
-	%cm_toggle_bit("Uncle left", !ram_game_flags, #$10)
-
-cm_game_state_flags_talked_to_aginah:
-	%cm_toggle_bit("Aginah", !ram_game_flags, #$20)
-
-cm_game_state_flags_fortune_teller_cycle:
-	%cm_toggle_bit("Fortune cycle", !ram_game_flags, #$40)
-
-cm_game_state_goto_bosses_submenu:
-	%cm_submenu("Toggle bosses defeated", cm_game_state_bosses_submenu)
-
-cm_game_state_bosses_submenu:
-	dw cm_game_state_bosses_armos
-	dw cm_game_state_bosses_lanmolas
-	dw cm_game_state_bosses_moldorm
-	dw cm_game_state_bosses_agahnim
-	dw cm_game_state_bosses_helma
-	dw cm_game_state_bosses_blind
-	dw cm_game_state_bosses_mothula
-	dw cm_game_state_bosses_kholdstare
-	dw cm_game_state_bosses_arrghus
-	dw cm_game_state_bosses_vitty
-	dw cm_game_state_bosses_trinexx
-	dw cm_game_state_bosses_agahnim_2
-	dw !menu_end
-	%cm_header("BOSSES DEFEATED")
-
-cm_game_state_bosses_armos:
-	%cm_toggle_bit("Armos", $7EF191, #$08)
-
-cm_game_state_bosses_lanmolas:
-	%cm_toggle_bit("Lanmola", $7EF067, #$08)
-
-cm_game_state_bosses_moldorm:
-	%cm_toggle_bit("Moldorm", $7EF00F, #$08)
-
-cm_game_state_bosses_agahnim:
-	%cm_toggle_bit("Agahnim", $7EF041, #$08)
-
-cm_game_state_bosses_helma:
-	%cm_toggle_bit("Helmasaur", $7EF0B5, #$08)
-
-cm_game_state_bosses_blind:
-	%cm_toggle_bit("Blind", $7EF159, #$08)
-
-cm_game_state_bosses_mothula:
-	%cm_toggle_bit("Mothula", $7EF053, #$08)
-
-cm_game_state_bosses_kholdstare:
-	%cm_toggle_bit("Kholdstare", $7EF1BD, #$08)
-
-cm_game_state_bosses_arrghus:
-	%cm_toggle_bit("Arrghus", $7EF00D, #$08)
-
-cm_game_state_bosses_vitty:
-	%cm_toggle_bit("Vitreous", $7EF121, #$08)
-
-cm_game_state_bosses_trinexx:
-	%cm_toggle_bit("Trinexx", $7EF149, #$08)
-
-cm_game_state_bosses_agahnim_2:
-	%cm_toggle_bit("Agahnim 2", $7EF01B, #$08)
-
-cm_game_state_goto_crystals_submenu:
-	%cm_submenu("Pendants and crystals", cm_game_state_crystals_submenu)
-
-cm_game_state_crystals_submenu:
-	dw cm_game_state_pendant_eastern
-	dw cm_game_state_pendant_desert
-	dw cm_game_state_pendant_hera
-	dw cm_game_state_crystal_pod
-	dw cm_game_state_crystal_theives
-	dw cm_game_state_crystal_skull
-	dw cm_game_state_crystal_ice
-	dw cm_game_state_crystal_swamp
-	dw cm_game_state_crystal_mire
-	dw cm_game_state_crystal_trock
-	dw !menu_end
-	%cm_header("PENDANTS AND CRYSTALS")
-
-cm_game_state_pendant_eastern:
-	%cm_toggle_bit("Eastern", !ram_game_pendants, #$04)
-
-cm_game_state_pendant_desert:
-	%cm_toggle_bit("Desert", !ram_game_pendants, #$02)
-
-cm_game_state_pendant_hera:
-	%cm_toggle_bit("Hera", !ram_game_pendants, #$01)
-
-cm_game_state_crystal_pod:
-	%cm_toggle_bit("Darkness", !ram_game_crystals, #$02)
-
-cm_game_state_crystal_theives:
-	%cm_toggle_bit("Thieves", !ram_game_crystals, #$20)
-
-cm_game_state_crystal_skull:
-	%cm_toggle_bit("Skull", !ram_game_crystals, #$40)
-
-cm_game_state_crystal_ice:
-	%cm_toggle_bit("Ice", !ram_game_crystals, #$04)
-
-cm_game_state_crystal_swamp:
-	%cm_toggle_bit("Swamp", !ram_game_crystals, #$10)
-
-cm_game_state_crystal_mire:
-	%cm_toggle_bit("Mire", !ram_game_crystals, #$01)
-
-cm_game_state_crystal_trock:
-	%cm_toggle_bit("Turtle Rock", !ram_game_crystals, #$08)
-
-cm_game_state_disable_sprites:
-	%cm_jsr("Remove sprites")
-
-.routine
-	SEP #$30
-	LDA #$22 : STA $012F
-	JSL Sprite_DisableAll
-	RTS
-
-cm_game_state_skip_text:
-	%cm_jsr("Skip text")
-
-.routine
-	LDA #$04 : STA $1CD4
-	RTS
-
-; }}}
+.list
+	db !EX, !EP, !DP, !TH
+	db !AT, !PD, !SP, !SW
+	db !TT, !IP, !MM, !TR
+	db !GT, !CV
