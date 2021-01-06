@@ -1,80 +1,55 @@
-; LINK STATE {{{
-cm_main_goto_link_state:
-	%cm_submenu("Link state", cm_submenu_link_state)
+LINKSTATE_SUBMENU:
+%menu_header("LINK STATE", 8)
 
-cm_submenu_link_state:
-	dw cm_link_state_armed_waterwalk
-	dw cm_link_state_activate_superbunny
-	dw cm_link_state_activate_lonk
-	dw cm_link_state_finish_mirrordoor
-	dw cm_link_state_statue_drag
-	dw cm_link_state_searchindex
-	dw cm_link_state_armed_eg
-	dw cm_link_state_eg_strength
-	dw !menu_end
-	%cm_header("LINK STATE")
-
-cm_link_state_armed_waterwalk:
-	dw !CM_ACTION_CHOICE
-	dl $5B
-	%list_item("Waterwalk")
+;===============================================================================
+%choice_here("Waterwalk", $005B, 4)
 	%list_item("Unarmed")
 	%list_item("Armed")
 	%list_item("Armed (2)")
 	%list_item("Deathholed")
-	db !list_end
-	
-cm_link_state_statue_drag:
-	%cm_toggle("Statue drag", $02FA)
 
-cm_link_state_activate_superbunny:
-	%cm_jsr("Activate superbunny")
+;===============================================================================
+%func_filtered("Activate superbunny", this)
+	LDA.b $5D
+	CMP.b #$17
+	BNE .nothappening
 
-.routine
-	LDA $5D : CMP #$17 : BNE nothappening
-	STZ $5D : LDA #$14 : BRA setSound
+	STZ.b $5D
+	JML CM_MenuSFX_poof
 
-cm_link_state_activate_lonk:
-	%cm_jsr("Activate Lonk")
+.nothappening
+	JML CM_MenuSFX_error
 
-.routine
-	LDA $5D : BNE nothappening
-	LDA #$17 : STA $5D : LDA #$26 : BRA setSound
+%func_filtered("Activate Lonk", this)
+	LDA.b $5D
+	BNE .nothappening
 
-nothappening:
-	SEP #$20
-	LDA #$3C
+	LDA.b #$17
+	STA.b $5D
+	JML CM_MenuSFX_oof
 
-setSound:
-	STA $012E
-	STZ $012F ; no default menu sounds
-	RTS
+;===============================================================================
+%func_filtered("Finish mirror door", this)
 
-cm_link_state_finish_mirrordoor:
-	%cm_jsr("Finish mirror door")
-.routine
 	REP #$20
-	LDA.w SA1RAM.cm_old_gamemode : CMP #$0007 : BEQ .allow
-	CMP #$010E : BNE nothappening
-	LDA $010C : CMP #$1A07 : BNE nothappening
+	LDA.b $10 : CMP.w #$0007 : BEQ .allow
+	CMP.w #$010E : BNE .nothappening
+	LDA.w $010C : CMP.w #$1A07 : BNE .nothappening
+
 .allow
-	LDA #$0111 : STA $C8
-++	SEP #$20
-	STZ $012F ; no default menu sounds
-	LDA #$15 : STA $012D
-	RTS
+	LDA.w #$0111 : STA.b $C8
+	RTL
 
-cm_link_state_armed_eg:
-	%cm_toggle("Armed EG", $047A)
+;===============================================================================
+%toggle("Statue drag", $02FA)
 
-cm_link_state_eg_strength:
-	dw !CM_ACTION_CHOICE
-	dl $7E044A
-	%list_item("EG strength")
+;===============================================================================
+%numfield_hex("Anc Index", $03C4, 0, $7F, 5)
+
+;===============================================================================
+%toggle("Armed EG", $047A)
+
+%choice_here("EG strength", $044A, 3)
 	%list_item("EG 0")
 	%list_item("Strong")
 	%list_item("Weak")
-	db !list_end
-
-cm_link_state_searchindex:
-	%cm_numfield("Anc Index", $7E03C4, #$00, #$FF, #$05)

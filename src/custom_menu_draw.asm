@@ -1,4 +1,213 @@
+EmptyCurrentMenu:
+	REP #$30
 
+	LDY.w #0
+
+	; clean every row listed
+.nextclean
+	LDA.b [SA1IRAM.cm_current_menu], Y
+	BPL .doneclean ; if we hit a 0, we're done
+
+	JSR EmptyCurrentRow
+	INY
+	INY
+	BRA .nextclean
+
+.donedraw
+.doneclean
+	RTS
+
+#DrawCurrentMenu:
+	REP #$30
+	LDY.w #0
+
+.nextdraw
+	LDA.b [SA1IRAM.cm_current_menu], Y
+	BPL .donedraw
+
+	JSR DrawCurrentRow
+	INY
+	INY
+	BRA .nextdraw
+
+
+EmptyCurrentRow:
+	JSR CM_YRowToXOffset
+
+	LDA.w #$0000
+	STA.b SA1IRAM.cm_draw_color
+	BRA .next_clean
+
+.from_here_to_end
+	REP #$20
+
+.next_clean
+	LDA.w #$002F
+	ORA.b SA1IRAM.cm_draw_color
+	STA.w SA1RAM.MENU, X
+	INX
+	INX
+	TXA
+	AND.w #$003F
+	BNE .next_clean
+
+	RTS
+
+#EmptyRestOfRow_long:
+	JSR .from_here_to_end
+	RTL
+
+CM_YRowToXOffset:
+	TYA
+	LSR
+	ASL #6
+
+	ADC.w #64+2 ; down 1 row + right 1
+
+	CPY.w #0
+	BEQ .header
+
+	ADC.w #63 ; down 1 more row if not a header, includes carry
+
+.header
+	TAX
+	RTS
+
+; in this case, Y holds the cursor index, not the message index
+DrawCurrentRow_ShiftY:
+	SEP #$10 ; clear top of Y, just in case
+	REP #$30
+	TYA
+	INC
+	ASL
+	TAY
+
+; Y = index into thing where 0 = header
+DrawCurrentRow:
+	REP #$30
+	PHY ; save this
+
+	JSR CM_YRowToXOffset
+
+	; put location of our row's text into DP
+	LDA.b SA1IRAM.cm_current_menu+1
+	STA.b SA1IRAM.cm_current_draw+1
+
+	LDA.b [SA1IRAM.cm_current_menu], Y
+	STA.b SA1IRAM.cm_current_draw+0
+
+	TYA ; should it be gray or yellow?
+	LSR ; does it match our selection?
+	DEC
+
+	BMI .header
+
+	SEP #$20
+	CMP.b SA1IRAM.cm_cursor
+	REP #$20
+	BNE .noselect
+
+.select
+	LDA.w #!SELECTED
+	BRA .setcol
+
+.header
+	LDA.w #!HEADER
+	BRA .setcol
+
+.noselect
+	LDA.w #!UNSELECTED
+
+.setcol
+	STA.b SA1IRAM.cm_draw_color
+
+	TYA
+	BEQ .isheader
+
+	LDA.b [SA1IRAM.cm_current_draw] ; what routine type is it?
+	AND.w #$00FF
+
+.isheader
+	PHX
+	TAX
+
+	ASL
+	STA.b SA1IRAM.cm_draw_type_offset ; remember the type for drawing
+
+	LDA.w ActionLengths, X ; this is how many bytes the header is for the item
+	AND.w #$00FF
+	TAY ; new location of data for name
+
+	LDA.w ActionIcons, X ; get the icon, obviously
+	AND.w #$00FF
+	ORA.b SA1IRAM.cm_draw_color
+
+	PLX
+	STA.w SA1RAM.MENU, X ; save the icon to the menu
+
+	LDA.w #16 ; for determining the filler
+	STA.b SA1IRAM.cm_draw_filler
+	INX
+	INX
+
+	; write each letter of the name
+.next_letter
+	LDA.b [SA1IRAM.cm_current_draw], Y
+	AND.w #$00FF
+	CMP.w #$00FF
+	BEQ .done_row_name
+
+	ORA.b SA1IRAM.cm_draw_color
+	STA.w SA1RAM.MENU, X
+
+	INY
+
+	INX
+	INX
+	DEC.b SA1IRAM.cm_draw_filler ; this is 1 less char to draw for filler
+	BRA .next_letter
+
+.done_row_name
+; for X until option, draw chr $1F
+	LDY.b SA1IRAM.cm_draw_filler ; get number of characters left to fill in
+
+	LDA.w #$002F
+	ORA.b SA1IRAM.cm_draw_color
+
+.next_mid_fill
+	STA.w SA1RAM.MENU, X
+
+	INX
+	INX
+	DEY
+	BPL .next_mid_fill
+
+	; now draw the specific routine type
+	PHX
+
+	LDX.b SA1IRAM.cm_draw_type_offset
+	LDA.w ActionDrawRoutines, X
+
+	PLX
+
+	PEA.w .return-1
+
+	DEC
+	PHA
+	SEP #$20 ; more useful
+	LDY.w #1 ; to skip the draw type
+	RTS
+
+.return
+	JSR EmptyCurrentRow_from_here_to_end
+
+.done_all
+	REP #$30
+	PLY
+	RTS
+
+
+;===============================================================================
 CMDRAW_SAVE_ADDRESS_LONG:
 	JSR .continue
 
@@ -18,11 +227,33 @@ CMDRAW_SAVE_ADDRESS_LONG:
 	INY
 
 	STA.b SA1IRAM.cm_writer+0
+	LDA.w #$0000 ; clear top byte to be nice
 
 	SEP #$20
 	RTS
 
 ;===============================================================================
+; This routine hinges on stack for program bank
+; No JMLs allowed
+CMDRAW_WORD_LONG_LONG:
+	PEA.w .return-1 ; so it will pull everything we push then return here
+
+	PHP
+	REP #$20
+	PHY
+	PHB
+	PHA
+
+	LDA 10,S ; get high byte too since slightly faster this way
+	PHA
+	PLB ; high byte pulled first
+	PLB ; PRGB of caller
+
+	BRA CMDRAW_WORD_START
+
+.return
+	RTL
+
 CMDRAW_WORD_LONG:
 	PHP
 	REP #$30
@@ -36,9 +267,9 @@ CMDRAW_WORD_LONG:
 	PLB
 
 	REP #$20
-	BRA .continue
+	BRA CMDRAW_WORD_START
 
-#CMDRAW_WORD:
+CMDRAW_WORD:
 	PHP
 	REP #$30
 	PHY
@@ -49,7 +280,7 @@ CMDRAW_WORD_LONG:
 
 	PHA
 
-.continue
+CMDRAW_WORD_START:
 	LDY.w #0
 
 .next
@@ -65,130 +296,147 @@ CMDRAW_WORD_LONG:
 	INY
 	BRA .next
 
-
 .done
 	PLA
 	PLB
-
-	REP #$30
 	PLY
 	PLP
-	JMP EmptyCurrentRow_from_here_to_end
+	RTS
 
 CMDRAW_RANDOM:
 	REP #$20
-	PLA
-	PHK
-	PHA
-.long
+	LDA.w #.text
+	JSR CMDRAW_WORD
+	RTL
+
+.text
+	db "Random", $FF
+
+CMDRAW_ERROR:
 	REP #$20
 	LDA.w #.text
 	JSR CMDRAW_WORD
 	RTL
 
 .text
-	db "RANDOM", $FF
+#ERROR_TEXT:
+	db "BAD VAL", $FF
 
 CMDRAW_ON:
 	REP #$20
-	PLA
-	PHK
-	PHA
-.long
-	REP #$20
 	LDA.w #.text
 	JSR CMDRAW_WORD
 	RTL
 
 .text
-	db "ON", $FF
+	db "On", $FF
 
 CMDRAW_YES:
 	REP #$20
-	PLA
-	PHK
-	PHA
-.long
-	REP #$20
 	LDA.w #.text
 	JSR CMDRAW_WORD
 	RTL
 
 .text
-	db "YES", $FF
+	db "Yes", $FF
 
 CMDRAW_OFF:
 	REP #$20
-	PLA
-	PHK
-	PHA
-.long
-	REP #$20
 	LDA.w #.text
 	JSR CMDRAW_WORD
 	RTL
 
 .text
-	db "OFF", $FF
+	db "Off", $FF
 
 CMDRAW_NO:
 	REP #$20
-	PLA
-	PHK
-	PHA
-.long
+	LDA.w #.text
+	JSR CMDRAW_WORD
+	RTL
+
+.text
+	db "No", $FF
+
+CMDRAW_UNFIXED:
 	REP #$20
 	LDA.w #.text
 	JSR CMDRAW_WORD
 	RTL
 
 .text
-	db "NO", $FF
+	db "Unfixed", $FF
+
+CMDRAW_HEX_2_DIGITS:
+	LDY.w #2
+	BRA CMDRAW_HEX
+
+CMDRAW_HEX_4_DIGITS:
+	LDY.w #4
+	BRA CMDRAW_HEX
 
 CMDRAW_HEX:
-	SEP #$20
-	PHA
-
-	JSR .tohex
-	STA.w $0001
-
-	PLA
-	LSR
-	LSR
-	LSR
-	LSR
-	JSR .tohex
-	STA.w $0000
-
-	LDA.b #$FF
-	STA.w $0002
+	PHP
 
 	REP #$20
-	LDA.w #$0000
-	JSR CMDRAW_WORD
+	PHA ; remember our number
 
+	LDA.w #'$' ; first add hex prefix to menu
+	ORA.b SA1IRAM.cm_draw_color
+	STA.w SA1RAM.MENU, X
+
+	TYA
+	ASL
+	STA.w $0000
+	TXA
+	ADC.w $0000 ; A now points to last digit of the number
+	TAX ; let X have that for later
+
+	PLA ; get A back
+	PHX ; save X position, we're going to decrement it soon
+
+	BRA .fill_hex
+
+.next_digit
+	LSR
+	LSR
+	LSR
+	LSR
+
+.fill_hex
+	PHA
+
+	AND.w #$000F
+	ORA.b SA1IRAM.cm_draw_color
+	STA.w SA1RAM.MENU, X
+
+	PLA
+
+	DEX
+	DEX
+
+	DEY
+	BNE .next_digit
+
+	PLX ; recover our position
+	INX ; set it to after the last digit
+	INX
+
+	PLP
 	RTL
 
-.tohex
-	AND.b #$0F
-	CMP.b #$0A
-	BCC .numeral
+CMDRAW_1_CHARACTER:
+	PHP
+	REP #$20
+	AND.w #$00FF
+	ORA.b SA1IRAM.cm_draw_color
 
-	SBC.b #$0A
-	RTS
+	STA.w SA1RAM.MENU, X
+	INX
+	INX
 
-.numeral
-	ORA.b #$20
-	RTS
-
-.long
-	PHB
-	PHK
-	PLB
-	JSR CMDRAW_HEX
-	PLB
+	PLP
 	RTL
-
 
 ;===============================================================================
 CMDRAW_TOGGLE_BIT0:
@@ -233,8 +481,11 @@ CMDRAW_CHECK_BIT_LONG:
 	AND.b [SA1IRAM.cm_writer]
 	BNE ++
 
-	JMP CMDRAW_NO
-++	JMP CMDRAW_YES
+	JSL CMDRAW_NO
+	RTS
+
+++	JSL CMDRAW_YES
+	RTS
 
 CMDRAW_TOGGLE_LONG:
 CMDRAW_TOGGLE_LONG_FUNC:
@@ -309,12 +560,12 @@ CMDRAW_CHECK_BIT_LONG_CUSTOMTEXT:
 	PHP
 
 	JSR CMDRAW_SAVE_ADDRESS_LONG
-	LDY.b #0
+	LDY.w #0
 
 	PLP
 	BNE .on
 
-	LDY.b #2
+	LDY.w #2
 
 .on
 	REP #$20
@@ -350,20 +601,173 @@ CMDRAW_TOGGLE_BIT0_LONG_CUSTOMTEXT:
 	LDA.b #$1<<0 : BRA CMDRAW_CHECK_BIT_LONG_CUSTOMTEXT
 
 ;===============================================================================
-CMDRAW_NUMFIELD:
+CMDRAW_NUMFIELD_LONG_2DIGITS: ; so bombs and arrows align better
+	DEX
+	DEX
+
 CMDRAW_NUMFIELD_LONG:
-CMDRAW_NUMFIELD_FUNC:
 CMDRAW_NUMFIELD_LONG_FUNC:
+	JSR CMDRAW_SAVE_ADDRESS_LONG
+	BRA .continue
+
+#CMDRAW_NUMFIELD:
+#CMDRAW_NUMFIELD_FUNC:
+	JSR CMDRAW_SAVE_ADDRESS_00
+
+.continue
+	LDA.b [SA1IRAM.cm_writer]
+	JSR CMDRAW_HEX_TO_DEC
+
+CMDRAW_NUMBER_DEC:
+	REP #$20
+
+	; first check the 100s place
+	LDA.b SA1IRAM.cm_writer+3
+	AND.w #$00FF
+	BNE .hundo
+
+	LDA.w #$002F
+
+.hundo
+	ORA.b SA1IRAM.cm_draw_color
+
+	STA.w SA1RAM.MENU, X
+	INX
+	INX
+
+	LDA.b SA1IRAM.cm_writer+0 ; check for 10s
+	LSR
+
+	LDA.b SA1IRAM.cm_writer+2
+	AND.w #$00FF
+	BCS .tens
+
+	LDA.w #$002F
+
+.tens
+	ORA.b SA1IRAM.cm_draw_color
+
+	STA.w SA1RAM.MENU, X
+	INX
+	INX
+
+	LDA.b SA1IRAM.cm_writer+1
+	AND.w #$00FF
+	ORA.b SA1IRAM.cm_draw_color
+
+	STA.w SA1RAM.MENU, X
+	INX
+	INX
+
+	RTS
+
+CMDRAW_NUMFIELD_LONG_HEX:
+CMDRAW_NUMFIELD_LONG_FUNC_HEX:
+	JSR CMDRAW_SAVE_ADDRESS_LONG
+	BRA .continue
+
+#CMDRAW_NUMFIELD_HEX:
+#CMDRAW_NUMFIELD_FUNC_HEX:
+	JSR CMDRAW_SAVE_ADDRESS_00
+
+.continue
+	LDA.b [SA1IRAM.cm_writer]
+	JSL CMDRAW_HEX_2_DIGITS
+	RTS
+
+CMDRAW_HEX_TO_DEC:
+	PHX
+	REP #$20
+
+	AND.w #$00FF
+	ASL
+	TAX
+
+	LDA.l hex_to_dec_fast_table, X
+
+	CMP.w #$0010 ; compare 10s
+	AND.w #$0F0F ; now get the 100s and 1s
+
+	SEP #$20
+	ROL.b SA1IRAM.cm_writer+0 ; put carry in bit 0 for 10s place
+
+.tiny_number
+	STA.b SA1IRAM.cm_writer+1
+
+	LDA.l hex_to_dec_fast_table, X
+	LSR
+	LSR
+	LSR
+	LSR
+	STA.b SA1IRAM.cm_writer+2
+
+	XBA
+	STA.b SA1IRAM.cm_writer+3
+
+	PLX
+	RTS
+
+CMDRAW_NUMFIELD_DEC_FROM_FUNC:
+	PHB
+	PHK
+	PLB
+	REP #$30
+	PHA
+	PHY
+
+	SEP #$20
+
+	JSR CMDRAW_HEX_TO_DEC
+	JSR CMDRAW_NUMBER_DEC
+
+	REP #$30
+	PLY
+	PLA
+	PLB
+	RTL
+
+
 CMDRAW_CTRL_SHORTCUT:
 CMDRAW_CTRL_SHORTCUT_FINAL:
-CMDRAW_CHOICE:
-CMDRAW_CHOICE_LONG:
+	RTS
+
+CMDRAW_NUMFIELD_FUNC_PRGTEXT:
+	JSR CMDRAW_SAVE_ADDRESS_00
+	LDY.w #9
+	BRA CMDRAW_PRGTEXT
+
+CMDRAW_NUMFIELD_LONG_FUNC_PRGTEXT:
+	JSR CMDRAW_SAVE_ADDRESS_LONG
+	LDY.w #10
+	BRA CMDRAW_PRGTEXT
+
 CMDRAW_CHOICE_PRGTEXT:
-CMDRAW_CHOICE_LONG_PRGTEXT:
-CMDRAW_CHOICE_FUNC:
-CMDRAW_CHOICE_LONG_FUNC:
 CMDRAW_CHOICE_FUNC_PRGTEXT:
+	JSR CMDRAW_SAVE_ADDRESS_00
+	LDY.w #4
+	BRA CMDRAW_PRGTEXT
+
+CMDRAW_CHOICE_LONG_PRGTEXT:
 CMDRAW_CHOICE_LONG_FUNC_PRGTEXT:
+	JSR CMDRAW_SAVE_ADDRESS_LONG
+	LDY.w #5
+
+CMDRAW_PRGTEXT:
+	LDA.b [SA1IRAM.cm_writer] ; get value at address
+	PHA ; save value
+
+	JSR CMDRAW_SAVE_ADDRESS_LONG
+
+	PLA ; recover it
+
+	PHK
+	PEA.w .return-1
+
+	SEP #$20
+	JML.w [SA1IRAM.cm_writer]
+
+.return
+	RTS
 
 ; All of these just empty the rest of the row
 CMDRAW_HEADER:
@@ -371,7 +775,40 @@ CMDRAW_PRESET:
 CMDRAW_SUBMENU:
 CMDRAW_SUBMENU_VARIABLE:
 CMDRAW_FUNC:
-	JMP EmptyCurrentRow_from_here_to_end
+CMDRAW_FUNC_FILTERED:
+	RTS
 
+CMDRAW_CHOICE:
+CMDRAW_CHOICE_FUNC:
+	JSR CMDRAW_SAVE_ADDRESS_00
+	BRA .continue
 
+.bad
+	JSL CMDRAW_ERROR
+	RTS
+
+#CMDRAW_CHOICE_LONG:
+#CMDRAW_CHOICE_LONG_FUNC:
+#CMDRAW_CHOICE_LONG_FUNC_FILTERED:
+	JSR CMDRAW_SAVE_ADDRESS_LONG
+
+.continue
+	LDA.b [SA1IRAM.cm_writer]
+	CMP.b [SA1IRAM.cm_current_draw], Y
+	BEQ .fine
+	BCS .bad
+
+.fine
+	PHA
+	INY
+	JSR CMDRAW_SAVE_ADDRESS_LONG
+
+	PLA
+	ASL
+	TAY
+
+	REP #$20
+	LDA.b [SA1IRAM.cm_writer], Y
+
+	JMP CMDRAW_WORD_LONG
 

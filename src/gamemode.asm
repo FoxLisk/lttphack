@@ -373,13 +373,6 @@ gamemode_fill_everything:
 	JSL Palette_Shield
 	JSL Palette_Armor
 
-	LDA.b $10
-	CMP.b #$0C
-	BNE .nopal
-
-	STZ.w $15 ; prevent palettes from redrawing if we're in the practice menu
-
-.nopal
 	RTL
 
 .table

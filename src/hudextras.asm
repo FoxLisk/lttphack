@@ -25,11 +25,24 @@ org $0DDD14
 ; some nice free rom here
 org $0DDB07
 fire_hud_irq:
-	SEP #$30
-	LDA.b #$83
+	JSL CacheSA1Stuff ; cache the big boy stuff we need for hud
+
+	; don't want to be transferring too much
+	; certain things will get designated as slow
+	LDA.b !ram_extra_sa1_required
+	BEQ .noextra
+
+	PHP
+	JSL Extra_SA1_Transfers
+	PLP
+
+.noextra
+	LDA.b #$83 ; request a hud update from SA-1
 	STA.w $2200
 	INC $16
 	RTS
+
+warnpc $0DDB3F
 
 ; for lanmo counters
 org $05A39B
@@ -996,32 +1009,24 @@ UpdateGlitchedWindow:
 	dw NoSuperWatch
 
 CleanVRAMSW:
-	SEP #$30
-	STZ.w $4200
-
---	BIT.w $4210
-	BPL --
-
-	LDA.b #$81
-	STA.w $2100
+	PHD
+	PEA.w $2100
+	PLD
 
 	LDA.b #$80
-	STA.w $2115
+	STA.b $2115
 
 	REP #$30
 	LDA.w #$C200>>1
-	STA.w $2116
+	STA.b $2116
 	LDX.w #$0300
 	LDA.w #$207F
 
---	STA.w $2118
+--	STA.b $2118
 	DEX
 	BNE --
 
-	SEP #$30
-	LDA.b #$81
-	STA.w $4200
-
+	PLD
 	RTL
 
 ClearSWBuffer:

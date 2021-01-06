@@ -1,7 +1,23 @@
-!SELECTED = $3400
+!SELECTED = $3480
 !UNSELECTED = $3800
-!HEADER = $3060
+!HEADER = $3100
 
+;===============================================================================
+cm_mainmenu:
+%menu_header("LTTPHACK !VERSION", 8)
+;	%submenu("Presets", preset_menu)
+	%submenu("Y Items", ITEMS_SUBMENU)
+	%submenu("Equipment", EQUIPMENT_SUBMENU)
+	%submenu("Game state", GAMESTATE_SUBMENU)
+	%submenu("Link state", LINKSTATE_SUBMENU)
+	%submenu("Gameplay", GAMEPLAY_SUBMENU)
+	%submenu("RNG control", RNG_SUBMENU)
+;	%submenu("Shortcuts", preset_menu)
+	%submenu("HUD extras", HUDEXTRAS_SUBMENU)
+	%submenu("Settings", CONFIG_SUBMENU)
+
+
+;===============================================================================
 cm_preset_data_banks:
 CM_Main:
 	PHB : PHK : PLB
@@ -55,7 +71,9 @@ CM_Main:
 CM_DrawMenu:
 	LDX.b #$04
 	STX.b SA1IRAM.cm_submodule
-	JMP DrawCurrentMenu
+	JSR DrawCurrentMenu
+	JSL NMI_RequestFullMenuUpdate
+	RTS
 
 CM_Return:
 	REP #$20
@@ -68,12 +86,12 @@ CM_Return:
 	PLD
 	PLB
 
-	
 	STZ.w $4200
 	LDA.b #$80
 	STA.w $2100
 
 	JSL load_default_tileset
+	JSL CleanVRAMSW
 
 	SEP #$30
 	LDA.w SA1RAM.preset_type
@@ -107,15 +125,15 @@ CM_PrepPPU:
 	LDA #$80 : STA $2115
 
 	LDX #$7000 : STX $2116 ; VRAM address (E000 in vram)
-	LDX #cm_hud_table : STX $4302 ; Source offset
-	LDA #cm_hud_table>>16 : STA $4304 ; Source bank
-	LDX #$0900 : STX $4305 ; Size (0x10 = 1 tile)
+	LDX #cm_gfx>>0 : STX $4302 ; Source offset
+	LDA #cm_gfx>>16 : STA $4304 ; Source bank
+	LDX #$1400 : STX $4305 ; Size (0x10 = 1 tile)
 	LDA #$01 : STA $4300 ; word, normal increment (DMA MODE)
 	LDA #$18 : STA $4301 ; destination (VRAM write)
 	LDA #$01 : STA $420B ; initiate DMA (channel 1)
 	RTS
-	; save temp variables that the menu uses
 
+; save temp variables that the menu uses
 CM_CacheWRAM:
 	SEP #$30
 
@@ -127,19 +145,19 @@ CM_CacheWRAM:
 	CMP #$03
 	LDA.b #$01
 	ADC.b #$00
-++	STA.w SA1RAM.list_item_bow
+++	STA.w SA1RAM.cm_item_bow
 
 	; Bottle
 	LDA.l !ram_item_bottle : BEQ ++
 	LDA.b #$01
-++	STA.w SA1RAM.list_item_bottle
+++	STA.w SA1RAM.cm_item_bottle
 
 	; Mirror
-	LDA.l !ram_item_mirror : LSR : STA.w SA1RAM.list_item_mirror
+	LDA.l !ram_item_mirror : LSR : STA.w SA1RAM.cm_item_mirror
 
 	; MaxHP
 	LDA.l !ram_equipment_maxhp
-	LSR #3 : DEC #3
+	LSR #3
 	STA.w SA1RAM.cm_equipment_maxhp
 
 	LDA.l $7EC172 : AND #$01 : STA.w SA1RAM.cm_crystal_switch
@@ -147,24 +165,14 @@ CM_CacheWRAM:
 	RTS
 
 CM_Init:
-	REP #$20
-	STZ.w SA1RAM.CM_SubMenuIndex
-
-	LDA.w #cm_mainmenu<<8
-	STA.b SA1IRAM.cm_cursor+0
-
-	LDA.w #cm_mainmenu>>8
-	STA.b SA1IRAM.cm_cursor+2
-
-	JSR CM_PushMenuToStack
+	JSR CM_ResetStackAndMenu
 
 	; blank the whole menu
 	REP #$20
 	SEP #$10
 	LDX.b #$00
 
-	; value of a transparent tile
-	LDA #$207F
+	LDA #$002F
 
 .loop
 	STA.w SA1RAM.MENU+$0000, X : STA.w SA1RAM.MENU+$0080, X
@@ -180,8 +188,7 @@ CM_Init:
 	INX
 	BPL .loop
 
-	SEP #$30
-
+	SEP #$20
 	LDA.b #$14 : STA.w $012E
 
 	LDA.b #$02 : STA.b SA1IRAM.cm_submodule
@@ -197,8 +204,28 @@ CM_MenuSFX:
 	PEA.w $0C00
 	BRA .continue
 
-.toggle
-	PEA.w $1D00
+.boop
+	PEA.w $002D
+	BRA .continue
+
+.bink
+	PEA.w $2000
+	BRA .continue
+
+.fill
+	PEA.w $0A00
+	BRA .continue
+
+.empty
+	PEA.w $0700
+	BRA .continue
+
+.poof
+	PEA.w $0014
+	BRA .continue
+
+.oof
+	PEA.w $0026
 	BRA .continue
 
 .switch
@@ -207,6 +234,10 @@ CM_MenuSFX:
 
 .submenu
 	PEA.w $2400
+	BRA .continue
+
+.submenuback
+	PEA.w $1300
 	BRA .continue
 
 .error
@@ -218,27 +249,29 @@ CM_MenuSFX:
 	REP #$20
 	PHA ; save our A
 
-	LDA 3,S ; get our PEA
+	LDA.l $00012E
+	BNE .sfx_busy
+
+	LDA 4,S ; get our PEA
 	STA.l $00012E
 
-	PLA ; recover A
-	STA 1,S ; delete the PEA we did
+.sfx_busy
+	LDA 2,S ; move the P to top of stack
+	STA 4,S
 
-	PLA ; recover that same A
+	PLA ; recover A
+	STA 1,S ; recover it again
+	PLA
+
 	PLP
-	RTS
+	RTL
 
 CM_BackToTipTop:
 	JSR EmptyCurrentMenu
-
-	SEP #$20 ; bring us back to index 4 so that it will be before topmost
-	LDA.b #$4
-	STA.b SA1RAM.CM_SubMenuIndex
-
-	JSR CM_GetTopMostFromStack
-
-	STZ.b SA1IRAM.cm_cursor
-	JMP DrawCurrentMenu
+	JSR CM_ResetStackAndMenu
+	JSR DrawCurrentMenu
+	JSL NMI_RequestFullMenuUpdate
+	RTS
 
 CM_ExitTime:
 	LDA.b #$06
@@ -266,7 +299,6 @@ CM_Active:
 	RTS
 
 .pressed_up
-
 	DEC.b SA1IRAM.cm_cursor
 	BRA CM_AdjustForWrap
 
@@ -308,16 +340,16 @@ CM_AdjustForWrap:
 #CM_DontGoBack:
 	STZ.b SA1IRAM.cm_cursor
 	CPY.b #$00 ; are we at the top of the menu
-	BNE CM_ReDrawCursorPosition
+	BNE .moved_cursor
 	RTS ; just leave if we're already at the top too
 
 #CM_GoBack:
-	LDX.w SA1RAM.CM_SubMenuIndex
-	BEQ CM_DontGoBack
-
 	JSR EmptyCurrentMenu
 	JSR CM_PullMenuFromStack
-	JMP DrawCurrentMenu
+	JSR DrawCurrentMenu
+	JSL CM_MenuSFX_submenuback
+	JSL NMI_RequestFullMenuUpdate
+	RTS
 
 .find_max
 	LDY.b #0 ; increment first, to skip header and condense loop
@@ -342,6 +374,9 @@ CM_AdjustForWrap:
 .not_max
 	PLY
 
+.moved_cursor
+	JSL CM_MenuSFX_boop
+
 CM_ReDrawCursorPosition:
 	PHY
 	JSR DrawCurrentRow_ShiftY
@@ -359,23 +394,6 @@ CM_ReDrawCursorPosition:
 
 	RTS
 
-CM_UpdateCurrentSelection:
-	REP #$20
-	SEP #$10
-	LDA.b SA1IRAM.cm_cursor
-	INC
-	ASL
-	TAY
-
-	LDA.b [SA1IRAM.cm_current_menu], Y
-	STA.b SA1IRAM.cm_current_selection+0
-
-	LDY.b SA1IRAM.cm_current_menu+2
-	STY.b SA1IRAM.cm_current_selection+2
-	RTS
-
-
-
 ;===============================================================================
 ; Puts presses into the 6th and 7th bits for easy testing
 ; Carry = B
@@ -385,6 +403,7 @@ CM_getcontroller:
 	REP #$20
 	STZ.b SA1IRAM.cm_leftright
 	STZ.b SA1IRAM.cm_ax
+	STZ.b SA1IRAM.cm_y
 
 	LDA.b SA1IRAM.CONTROLLER_1
 
@@ -393,10 +412,8 @@ CM_getcontroller:
 
 	BEQ .same_as_last_frame
 
-	PHA
-	LDA.w #15
-	STA.w SA1RAM.cm_input_timer
-	PLA
+	LDX.b #15
+	STX.w SA1RAM.cm_input_timer
 
 	CMP.b SA1IRAM.CONTROLLER_1_FILTERED
 	SEP #$20
@@ -407,23 +424,23 @@ CM_getcontroller:
 
 	; get A and X, but only new presses
 	LDA.b SA1IRAM.CopyOf_F6
-	ASL
-	ROL
-	ROR.b SA1IRAM.cm_ax
-	ROR
-	ROR.b SA1IRAM.cm_ax
+	STA.b SA1IRAM.cm_ax
 
-	; get new B presses
+	; get new B presses in carry
+	; this also puts Y presses in bit 7
 	LDA.b SA1IRAM.CopyOf_F4
 	ASL
+	AND.b #$80 ; get rid of other bits
+	STA.b SA1IRAM.cm_y
 
-	; now see if anything actionable was pressed
-	LDA.b SA1IRAM.cm_leftright
+	; now combine see if anything actionable was pressed
+	ORA.b SA1IRAM.cm_leftright
 	ORA.b SA1IRAM.cm_ax
 	ORA.b SA1IRAM.cm_shoulder
 	AND.b #$C0
 
 	RTS
+
 
 .same_as_last_frame
 	CMP.w #$0001
@@ -437,7 +454,11 @@ CM_getcontroller:
 
 	DEC
 	STA.w SA1RAM.cm_input_timer
-	BRA .no_presses
+
+.no_presses
+	LDA.b #$00 ; get 0
+	CLC
+	RTS
 
 .continue
 	LDA.b #4
@@ -457,29 +478,54 @@ CM_getcontroller:
 	LSR
 	ROR.b SA1IRAM.cm_updown
 
-	; get l and r, but only new presses
+	; get l and r
+	LDA.b SA1IRAM.CopyOf_F2
 	ASL
-	ROR.b SA1IRAM.cm_shoulder
 	ASL
-	ROR.b SA1IRAM.cm_shoulder
+	STA.b SA1IRAM.cm_shoulder
 
 	; get actionable presses
-.no_presses
+
 	LDA.b SA1IRAM.cm_leftright
 	ORA.b SA1IRAM.cm_shoulder
 	AND.b #$C0
-
 	CLC ; no B press
 	RTS
 
-
-
-
 ;===============================================================================
+; X points to first empty slot
+;===============================================================================
+CM_ResetStackAndMenu:
+	REP #$20
+	STZ.w SA1RAM.CM_SubMenuIndex
+
+	LDA.w #cm_mainmenu<<8
+	STA.b SA1IRAM.cm_cursor+0
+
+	LDA.w #cm_mainmenu>>8
+	STA.b SA1IRAM.cm_cursor+2
+
+CM_UpdateCurrentSelection:
+	REP #$20
+	SEP #$10
+	LDA.b SA1IRAM.cm_cursor
+	INC
+	ASL
+	TAY
+
+	LDA.b [SA1IRAM.cm_current_menu], Y
+	STA.b SA1IRAM.cm_current_selection+0
+
+	LDY.b SA1IRAM.cm_current_menu+2
+	STY.b SA1IRAM.cm_current_selection+2
+	RTS
+
+
 CM_PushMenuToStack:
 	PHX
 	PHY
 	PHP
+
 	REP #$20
 	SEP #$10
 
@@ -504,34 +550,6 @@ CM_PushMenuToStack:
 	PLX
 	RTS
 
-; does so without changing stack
-CM_GetTopMostFromStack:
-	PHX
-	PHY
-	PHP
-
-	SEP #$10
-	LDX.w SA1RAM.CM_SubMenuIndex
-	DEX
-	DEX
-	DEX
-	DEX
-
-.do
-	REP #$20
-	LDA.w SA1RAM.CM_SubMenuStack+0, X
-	STA.b SA1IRAM.cm_cursor+0
-
-	LDA.w SA1RAM.CM_SubMenuStack+2, X
-	STA.b SA1IRAM.cm_cursor+2
-
-	JSR CM_UpdateCurrentSelection
-
-	PLP
-	PLY
-	PLX
-	RTS
-
 ; carry = successful pull
 #CM_PullMenuFromStack:
 	PHX
@@ -542,231 +560,33 @@ CM_GetTopMostFromStack:
 	SEP #$10
 
 	LDX.w SA1RAM.CM_SubMenuIndex
-	BEQ .cannot
+	CPX.b #$04
+	BCC .cannot
 
 	DEX
 	DEX
 	DEX
 	DEX
+
+	REP #$20
+	LDA.w SA1RAM.CM_SubMenuStack+0, X
+	STA.b SA1IRAM.cm_cursor+0
+
+	LDA.w SA1RAM.CM_SubMenuStack+2, X
+	STA.b SA1IRAM.cm_cursor+2
+
 	STX.w SA1RAM.CM_SubMenuIndex
+	JSR CM_UpdateCurrentSelection
 
-	BRA .do
+	PLP
+	PLY
+	PLX
+	RTS
 
 .cannot
 	PLP
 	PLY
 	PLX
-	CLC
-	RTS
-
-EmptyCurrentMenu:
-	REP #$30
-
-	LDY.w #0
-
-	; clean every row listed
-.nextclean
-	LDA.b [SA1IRAM.cm_current_menu], Y
-	BPL .doneclean ; if we hit a 0, we're done
-
-	JSR EmptyCurrentRow
-	INY
-	INY
-	BRA .nextclean
-
-.donedraw
-.doneclean
-	RTS
-
-#DrawCurrentMenu:
-	REP #$30
-	LDY.w #0
-
-.nextdraw
-	LDA.b [SA1IRAM.cm_current_menu], Y
-	BPL .donedraw
-
-	JSR DrawCurrentRow
-	INY
-	INY
-	BRA .nextdraw
-
-
-EmptyCurrentRow:
-	TYA
-	LSR
-	CLC
-	ASL #6
-	TAX
-
-	LDA.w #$0000
-	STA.b SA1IRAM.cm_draw_color
-	BRA .next_clean
-
-.from_here_to_end
-	REP #$20
-
-.next_clean
-	LDA.w #$207F
-	ORA.b SA1IRAM.cm_draw_color
-	STA.w SA1RAM.MENU, X
-	INX
-	INX
-	TXA
-	AND.w #$003F
-	BNE .next_clean
-
-	RTS
-
-
-
-
-
-
-
-
-
-
-; in this case, Y holds the cursor index, not the message index
-DrawCurrentRow_ShiftY:
-	TYA
-	INC
-	ASL
-	TAY
-
-; Y = index into thing where 0 = header
-DrawCurrentRow:
-	REP #$30
-	PHY ; save this
-
-	TYA
-	LSR
 
 	CLC
-	ASL #6
-	ADC.w #64+2 ; down 1 row + right 1
-
-	CPY.w #0
-	BEQ .headersstt
-
-	ADC.w #63 ; down 1 more row if not a header, includes carry
-
-.headersstt
-	TAX ; start of row in the menu
-
-	; put location of our row's text into DP
-	LDA.b SA1IRAM.cm_current_menu+1
-	STA.b SA1IRAM.cm_current_draw+1
-
-	LDA.b [SA1IRAM.cm_current_menu], Y
-	STA.b SA1IRAM.cm_current_draw+0
-
-	TYA ; should it be gray or yellow?
-	LSR ; does it match our selection?
-	DEC
-
-	BMI .header
-
-	SEP #$20
-	CMP.b SA1IRAM.cm_cursor
-	REP #$20
-	BNE .noselect
-
-.select
-	LDA.w #!SELECTED
-	BRA .setcol
-
-.header
-	LDA.w #!HEADER
-	BRA .setcol
-
-.noselect
-	LDA.w #!UNSELECTED
-
-.setcol
-	STA.b SA1IRAM.cm_draw_color
-
-	TYA
-	BEQ .isheader
-
-	LDA.b [SA1IRAM.cm_current_draw] ; what routine type is it?
-	AND.w #$00FF
-
-.isheader
-	PHX
-	TAX
-
-	ASL
-	STA.b SA1IRAM.cm_draw_type_offset ; remember the type for drawing
-
-	LDA.w ActionLengths, X ; this is how many bytes the header is for the item
-	AND.w #$00FF
-	TAY ; new location of data for name
-
-	LDA.w ActionIcons, X ; get the icon, obviously
-	AND.w #$00FF
-	ORA.b SA1IRAM.cm_draw_color
-
-	PLX
-	STA.w SA1RAM.MENU, X ; save the icon to the menu
-
-	LDA.w #14 ; for determining the filler
-	STA.b SA1IRAM.cm_draw_filler
-	INX
-	INX
-
-	; write each letter of the name
-.next_letter
-	LDA.b [SA1IRAM.cm_current_draw], Y
-	AND.w #$00FF
-	CMP.w #$00FF
-	BEQ .done_row_name
-
-	ORA.b SA1IRAM.cm_draw_color
-	STA.w SA1RAM.MENU, X
-
-	INY
-
-	INX
-	INX
-	DEC.b SA1IRAM.cm_draw_filler ; this is 1 less char to draw for filler
-	BRA .next_letter
-
-.done_row_name
-; for X until option, draw chr $1F
-	LDY.b SA1IRAM.cm_draw_filler ; get number of characters left to fill in
-
-	LDA.w #$001F
-	ORA.b SA1IRAM.cm_draw_color
-.next_mid_fill
-	STA.w SA1RAM.MENU, X
-
-	INX
-	INX
-	DEY
-	BPL .next_mid_fill
-
-	; now draw the specific routine type
-	PHX
-
-	LDX.b SA1IRAM.cm_draw_type_offset
-	LDA.w ActionDrawRoutines, X
-
-	PLX
-
-	PEA.w .return-1
-
-	DEC
-	PHA
-
-	SEP #$20 ; more useful
-	LDY.w #1 ; to skip the draw type
-	RTS
-
-.return
-
-.done_all
-	REP #$30
-	PLY
-	RTS
-
+	JMP CM_ResetStackAndMenu

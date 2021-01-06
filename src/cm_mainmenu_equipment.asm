@@ -1,324 +1,162 @@
-; EQUIPMENT {{{
+EQUIPMENT_SUBMENU:
+%menu_header("EQUIPMENT", 18)
+;===============================================================================
+%numfield_long("Magic", !ram_equipment_magic_meter, 0, $80, 8)
 
-cm_main_goto_equipment:
-	%cm_submenu("Equipment", cm_submenu_equipment)
+;===============================================================================
+%numfield_long_func_prgtext("HP", !ram_equipment_curhp, 0, $A0, 8, this, cm_draw_hp)
+	LDA.l !ram_equipment_curhp
+	CMP.l !ram_equipment_maxhp
+	BCC ..not_max
 
-cm_submenu_equipment:
-	dw cm_equipment_fill_magic
-	dw cm_equipment_fill_hearts
-	dw cm_equipment_fill_rupees
+	LDA.l !ram_equipment_maxhp
+	BRA ..set
 
-	dw cm_equipment_sword
-	dw cm_equipment_shield
-	dw cm_equipment_armor
+..not_max
+	BIT.b SA1IRAM.cm_shoulder
+	BVS ..flatten
+	BPL ..set
 
-	dw cm_equipment_gloves
-	dw cm_equipment_boots
-	dw cm_equipment_flippers
-	dw cm_equipment_moon_pearl
-	dw cm_equipment_half_magic
+..flatten
+	AND.b #$F8
 
-	dw cm_equipment_maxhp
-	dw cm_equipment_bombs
-	dw cm_equipment_arrows
-	dw cm_equipment_keys
-;	dw cm_equipment_goto_small_keys_submenu ; maybe?
-	dw cm_equipment_goto_big_keys_submenu
+..set
+	STA.l !ram_equipment_curhp
+	RTL
 
-	dw cm_equipment_fill_everything
-	dw !menu_end
-	%cm_header("EQUIPMENT")
+#cm_draw_hp:
+	PHA ; save A
+	LSR ; divide by 8 for hearts
+	LSR
+	LSR
 
-cm_equipment_boots:
-	%cm_toggle_jsr("Boots", !ram_equipment_boots)
+	JSL CMDRAW_NUMFIELD_DEC_FROM_FUNC ; draw our max HP
 
-.toggle
-	STA.l !ram_equipment_boots
-	LSR ; set carry based on having boots
-	LDA.l !ram_capabilities : AND #$FB
-	BCC .no_boots
-.yes_boots
-	ORA #$04
-.no_boots
-	STA.l !ram_capabilities
-	RTS
+	SEP #$20
+	PLA
+	AND.b #$07 ; get fractional
+	ORA.b #$40
+	JML CMDRAW_1_CHARACTER
 
-cm_equipment_gloves:
-	dw !CM_ACTION_CHOICE
-	dl !ram_equipment_gloves
-	%list_item("Gloves")
-	%list_item("No")
-	%list_item("Power glove")
-	%list_item("Titan's mitt")
-	db !list_end
+;===============================================================================
+%numfield_func("Max HP", SA1RAM.cm_equipment_maxhp, 3, 20, 5, this)
+	LDA.w SA1RAM.cm_equipment_maxhp
+	ASL #3
+	STA.l !ram_equipment_maxhp
+	RTL
 
-cm_equipment_flippers:
-	%cm_toggle_jsr("Flippers", !ram_equipment_flippers)
+;===============================================================================
+%func("Fill rupees", this)
+	REP #$20
+	LDA.w #999
+	STA.l $7EF360
+	STA.l $7EF362
+	RTL
 
-.toggle
-	STA.l !ram_equipment_flippers
-	LSR ; set carry based on having flippers
-	LDA.l !ram_capabilities : AND #$FD
-	BCC .no_flips
-.yes_flips
-	ORA #$02
-.no_flips
-	STA.l !ram_capabilities
-	RTS
+;===============================================================================
+%func_filtered("Fill everything", gamemode_fill_everything)
 
-cm_equipment_moon_pearl:
-	%cm_toggle("Moon pearl", !ram_equipment_moon_pearl)
-
-cm_equipment_half_magic:
-	%cm_toggle("Half magic", !ram_equipment_half_magic)
-
-cm_equipment_sword:
-	dw !CM_ACTION_CHOICE_JSR
-	dw .toggle_sword
-	dl !ram_equipment_sword
-	%list_item("Sword")
+;===============================================================================
+%choice_long_func_filtered_here("Sword", !ram_equipment_sword, 5, set_sword)
 	%list_item("No")
 	%list_item("Fighter")
 	%list_item("Master")
 	%list_item("Tempered")
 	%list_item("Gold")
-	db !list_end
 
-.toggle_sword
+#set_sword:
 	JSL DecompSwordGfx
-	JSL Palette_Sword
-	STZ.w $15
-	RTS
+	JML Palette_Sword
 
-cm_equipment_shield:
-	dw !CM_ACTION_CHOICE_JSR
-	dw .toggle_shield
-	dl !ram_equipment_shield
-	%list_item("Shield")
+;===============================================================================
+%choice_long_func_filtered_here("Shield", !ram_equipment_shield, 4, set_shield)
 	%list_item("No")
 	%list_item("Fighter")
 	%list_item("Red")
 	%list_item("Mirror")
-	db !list_end
 
-.toggle_shield
+#set_shield:
 	JSL DecompShieldGfx
-	JSL Palette_Shield
-	STZ.w $15
-	RTS
+	JML Palette_Shield
 
-cm_equipment_armor:
-	dw !CM_ACTION_CHOICE_JSR
-	dw .toggle_armor
-	dl !ram_equipment_armor
-	%list_item("Armor")
+;===============================================================================
+%choice_long_func_filtered_here("Armor", !ram_equipment_armor, 3, Palette_Armor)
 	%list_item("Green")
 	%list_item("Blue")
 	%list_item("Red")
-	db !list_end
 
-.toggle_armor
-	JSL Palette_Armor
-	STZ.w $15
-	RTS
+;===============================================================================
+%choice_long_func_filtered_here("Gloves", !ram_equipment_gloves, 3, Palette_Armor)
+	%list_item("Bare hands")
+	%list_item("Power glove")
+	%list_item("Titan's mitt")
 
-cm_equipment_fill_magic:
-	%cm_jsr("Fill magic")
+;===============================================================================
+%toggle_long_func("Boots", !ram_equipment_boots, this)
+	LSR
+	LDA.l !ram_capabilities
+	AND.b #$FB
+	BCC ++
+	ORA.b #$04
+++	STA.l !ram_capabilities
+	RTL
 
-.routine
-	LDA #$80 : STA.l !ram_equipment_magic_meter
-	RTS
+;===============================================================================
+%toggle_long_func("Flippers", !ram_equipment_flippers, this)
+	LSR
+	LDA.l !ram_capabilities
+	AND.b #$FD
+	BCC ++
+	ORA.b #$02
+++	STA.l !ram_capabilities
+	RTL
 
-cm_equipment_fill_rupees:
-	%cm_jsr("Fill rupees")
+;===============================================================================
+%toggle_long("Moon pearl", !ram_equipment_moon_pearl)
 
-.routine
-	REP #$20
-	; Sets 999 rupees
-	LDA #$03E7 : STA $7EF360 : STA $7EF362
-	RTS
+;===============================================================================
+%toggle_long("Half magic", !ram_equipment_half_magic)
 
-cm_equipment_fill_hearts:
-	%cm_jsr("Fill HP")
+;===============================================================================
+%add_menu_item(BOMBS_SETTER)
+%numfield_long_2digits("Arrows", !ram_equipment_arrows_filler, 0, 50, 5)
+%numfield_long("Keys", !ram_equipment_keys, 0, 9, 1)
 
-.routine
-	LDA.l !ram_equipment_maxhp : STA.l !ram_equipment_curhp
-	RTS
+;===============================================================================
+%submenu("Big keys", BIG_KEYS_SUBMENU)
+%submenu("Small keys", SMALL_KEYS_SUBMENU)
 
-cm_equipment_fill_everything:
-	%cm_jsr("Fill Everything")
+;===============================================================================
+BIG_KEYS_SUBMENU:
+%menu_header("BIG KEYS", 14)
+	%toggle_bit_long("Sewers", !ram_game_big_keys_2, 7)
+	%toggle_bit_long("Hyrule Castle", !ram_game_big_keys_2, 6)
+	%toggle_bit_long("Eastern", !ram_game_big_keys_2, 5)
+	%toggle_bit_long("Desert", !ram_game_big_keys_2, 4)
+	%toggle_bit_long("ATower", !ram_game_big_keys_2, 3)
+	%toggle_bit_long("Swamp", !ram_game_big_keys_2, 2)
+	%toggle_bit_long("Darkness", !ram_game_big_keys_2, 1)
+	%toggle_bit_long("Mire", !ram_game_big_keys_2, 0)
+	%toggle_bit_long("Skull", !ram_game_big_keys_1, 7)
+	%toggle_bit_long("Ice", !ram_game_big_keys_1, 6)
+	%toggle_bit_long("Hera", !ram_game_big_keys_1, 5)
+	%toggle_bit_long("Thieves", !ram_game_big_keys_1, 4)
+	%toggle_bit_long("Turtle Rock", !ram_game_big_keys_1, 3)
+	%toggle_bit_long("GTower", !ram_game_big_keys_1, 2)
 
-.routine
-	JSL gamemode_fill_everything
-	RTS
-
-cm_equipment_maxhp:
-	dw !CM_ACTION_CHOICE_JSR
-	dw .set_maxhp
-	dl SA1RAM.cm_equipment_maxhp
-	%list_item("Max HP")
-	%list_item("3")
-	%list_item("4")
-	%list_item("5")
-	%list_item("6")
-	%list_item("7")
-	%list_item("8")
-	%list_item("9")
-	%list_item("10")
-	%list_item("11")
-	%list_item("12")
-	%list_item("13")
-	%list_item("14")
-	%list_item("15")
-	%list_item("16")
-	%list_item("17")
-	%list_item("18")
-	%list_item("19")
-	%list_item("20")
-	db !list_end
-
-.set_maxhp
-	LDA.w SA1RAM.cm_equipment_maxhp
-	INC #3
-	ASL #3
-	; Need to fill HP to get immediate effect
-	STA.l !ram_equipment_maxhp : STA.l !ram_equipment_curhp
-	RTS
-
-cm_equipment_bombs:
-	%cm_numfield("Bombs", !ram_item_bombs, #0, #30, #5)
-
-cm_equipment_arrows:
-	%cm_numfield("Arrows", !ram_equipment_arrows_filler, #0, #50, #5)
-
-cm_equipment_keys:
-	%cm_numfield("Keys", !ram_equipment_keys, #0, #9, #1)
-
-cm_equipment_goto_big_keys_submenu:
-	%cm_submenu("Big keys", cm_submenu_big_keys)
-
-cm_submenu_big_keys:
-	dw cm_big_keys_sewers
-	dw cm_big_keys_hc
-	dw cm_big_keys_eastern
-	dw cm_big_keys_desert
-	dw cm_big_keys_hera
-	dw cm_big_keys_aga
-	dw cm_big_keys_pod
-	dw cm_big_keys_thieves
-	dw cm_big_keys_skull
-	dw cm_big_keys_ice
-	dw cm_big_keys_swamp
-	dw cm_big_keys_mire
-	dw cm_big_keys_trock
-	dw cm_big_keys_gtower
-
-	dw !menu_end
-	%cm_header("BIG KEYS")
-
-cm_big_keys_sewers:
-	%cm_toggle_bit("Sewers", !ram_game_big_keys_2, #$80)
-
-cm_big_keys_hc:
-	%cm_toggle_bit("Hyrule Castle", !ram_game_big_keys_2, #$40)
-
-cm_big_keys_eastern:
-	%cm_toggle_bit("Eastern", !ram_game_big_keys_2, #$20)
-
-cm_big_keys_desert:
-	%cm_toggle_bit("Desert", !ram_game_big_keys_2, #$10)
-
-cm_big_keys_aga:
-	%cm_toggle_bit("ATower", !ram_game_big_keys_2, #$08)
-
-cm_big_keys_swamp:
-	%cm_toggle_bit("Swamp", !ram_game_big_keys_2, #$04)
-
-cm_big_keys_pod:
-	%cm_toggle_bit("Darkness", !ram_game_big_keys_2, #$02)
-
-cm_big_keys_mire:
-	%cm_toggle_bit("Mire", !ram_game_big_keys_2, #$01)
-
-cm_big_keys_skull:
-	%cm_toggle_bit("Skull", !ram_game_big_keys_1, #$80)
-
-cm_big_keys_ice:
-	%cm_toggle_bit("Ice", !ram_game_big_keys_1, #$40)
-
-cm_big_keys_hera:
-	%cm_toggle_bit("Hera", !ram_game_big_keys_1, #$20)
-
-cm_big_keys_thieves:
-	%cm_toggle_bit("Thieves", !ram_game_big_keys_1, #$10)
-
-cm_big_keys_trock:
-	%cm_toggle_bit("Turtle Rock", !ram_game_big_keys_1, #$08)
-
-cm_big_keys_gtower:
-	%cm_toggle_bit("GTower", !ram_game_big_keys_1, #$04)
-
-;-----
-
-cm_equipment_goto_small_keys_submenu:
-	%cm_submenu("Small keys", cm_submenu_small_keys)
-
-cm_submenu_small_keys:
-	dw cm_small_keys_escape
-	dw cm_small_keys_eastern
-	dw cm_small_keys_desert
-	dw cm_small_keys_hera
-	dw cm_small_keys_aga
-	dw cm_small_keys_pod
-	dw cm_small_keys_thieves
-	dw cm_small_keys_skull
-	dw cm_small_keys_ice
-	dw cm_small_keys_swamp
-	dw cm_small_keys_mire
-	dw cm_small_keys_trock
-	dw cm_small_keys_gtower
-
-	dw !menu_end
-	%cm_header("SMALL KEYS")
-
-cm_small_keys_escape:
-	%cm_numfield("Escape", $7EF37C, #$00, #$09, #$01)
-
-cm_small_keys_eastern:
-	%cm_numfield("Eastern", $7EF37E, #$00, #$09, #$01)
-
-cm_small_keys_desert:
-	%cm_numfield("Desert", $7EF37F, #$00, #$09, #$01)
-
-cm_small_keys_hera:
-	%cm_numfield("Hera", $7EF386, #$00, #$09, #$01)
-
-cm_small_keys_aga:
-	%cm_numfield("ATower", $7EF380, #$00, #$09, #$01)
-
-cm_small_keys_pod:
-	%cm_numfield("Darkness", $7EF382, #$00, #$09, #$01)
-
-cm_small_keys_thieves:
-	%cm_numfield("Thieves", $7EF387, #$00, #$09, #$01)
-
-cm_small_keys_skull:
-	%cm_numfield("Skull", $7EF384, #$00, #$09, #$01)
-
-cm_small_keys_ice:
-	%cm_numfield("Ice", $7EF385, #$00, #$09, #$01)
-
-cm_small_keys_swamp:
-	%cm_numfield("Swamp", $7EF381, #$00, #$09, #$01)
-
-cm_small_keys_mire:
-	%cm_numfield("Mire", $7EF383, #$00, #$09, #$01)
-
-cm_small_keys_trock:
-	%cm_numfield("Turtle Rock", $7EF388, #$00, #$09, #$01)
-
-cm_small_keys_gtower:
-	%cm_numfield("GTower", $7EF389, #$00, #$09, #$01)
-
-
-; }}}
+;===============================================================================
+SMALL_KEYS_SUBMENU:
+%menu_header("SMALL KEYS", 13)
+	%numfield_long("Escape", $7EF37C, 0, 9, 1)
+	%numfield_long("Eastern", $7EF37E, 0, 9, 1)
+	%numfield_long("Desert", $7EF37F, 0, 9, 1)
+	%numfield_long("Hera", $7EF386, 0, 9, 1)
+	%numfield_long("ATower", $7EF380, 0, 9, 1)
+	%numfield_long("Darkness", $7EF382, 0, 9, 1)
+	%numfield_long("Thieves", $7EF387, 0, 9, 1)
+	%numfield_long("Skull", $7EF384, 0, 9, 1)
+	%numfield_long("Ice", $7EF385, 0, 9, 1)
+	%numfield_long("Swamp", $7EF381, 0, 9, 1)
+	%numfield_long("Mire", $7EF383, 0, 9, 1)
+	%numfield_long("Turtle Rock", $7EF388, 0, 9, 1)
+	%numfield_long("GTower", $7EF389, 0, 9, 1)

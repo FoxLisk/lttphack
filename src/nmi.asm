@@ -4,13 +4,24 @@ pushpc
 ; Has no effect on anything
 ; But it gives us consistent improvements to account for practice hack lag
 ;======================================================================================
+org $00805D
+	JML WasteTimeIfNeeded
+
 org $00841E
-	; 246,16 : 250,18
-	; Vanilla OAM cycles: 4 scanlines - 10 H
-	; improved to: 2 scanlines + 28H
+	LDA.b $F0 : STA.w SA1IRAM.CopyOf_F0
+	LDA.b $F2 : STA.w SA1IRAM.CopyOf_F2
+	LDA.b $F4 : STA.w SA1IRAM.CopyOf_F4
+	LDA.b $F6 : STA.w SA1IRAM.CopyOf_F6
+
+	LDA.b #$81 ; fire an IRQ to request shortcuts
+	STA.w $2200
 
 	REP #$10
 	LDX.w $4300 : PHX
+
+	; 246,16 : 250,18
+	; Vanilla OAM cycles: 4 scanlines - 10 H
+	; improved to: 2 scanlines + 28H
 
 	; first half
 	LDX #$8001 : STX $4300
@@ -31,14 +42,50 @@ org $00841E
 
 	STA $420B
 
-	JSL CacheSA1Stuff
-
 	PLX
 	STX.w $4300
 
 	SEP #$30
+
 	RTS
 warnpc $008489
+
+;===============================================================================
+; This small joypad improvement of 8 cycles gives us a little more leeway
+; but we also use 10 cycles here for joypad 2
+; net loss is 2 cycles, not an issue
+;===============================================================================
+org $083D1
+	REP #$20
+	LDA.w $421A
+	STA.w SA1IRAM.JOYPAD2_NEW
+
+	LDA.w $4218
+	STA.b $00
+
+	SEP #$20
+	STA.b $F2
+	TAY
+	EOR.b $FA
+	AND.b $F2
+	STA.b $F6
+	STY.b $FA
+
+	XBA
+	STA.b $F0
+	TAY
+	EOR.b $F8
+	AND.b $F0
+	STA.b $F4
+	STY.b $F8
+
+	RTS
+
+warnpc $0083F8
+
+
+
+
 
 ; NMI hook
 org $0080D5
@@ -257,18 +304,23 @@ NMI_UpdatePracticeHUD:
 .full
 	REP #$20
 
-	LDA.w #SA1RAM.MENU : STA.w $4302
-	LDA.w #$6C00 : STA.w $2116
+	LDA.w #SA1RAM.MENU
+	STA.w $4302
+	LDA.w #$6C00
+	STA.w $2116
 	LDA.w #$0800
 
 .start
 	STA.w $4305
-	LDA.w #$1801 : STA.w $4300
+	LDA.w #$1801
+	STA.w $4300
 
 	SEP #$20
-	LDA.b #$80 : STA.w $2115
+	LDA.b #$80
+	STA.w $2115
 	STZ.w $4304
-	LDA.b #$01 : STA.w $420B
+	LDA.b #$01
+	STA.w $420B
 
 	RTS
 
@@ -394,42 +446,46 @@ SNES_CUSTOM_NMI:
 	BPL --
 
 	PLD ; D=0000
+	TDC ; A=0000
 
 	; Refresh colors every frame just cause it's easier
 	REP #$10
-	LDX.w #0
-
+	LDY.w #0
 
 .next_color
-	LDA.w .cgrams, X
+	LDA.w .cgrams, Y
 	BMI .done_color
 
-	INX
+	INY
 	STA.w $2121
 
-	LDY.w .cgrams, X
-	INX
-	INX
+	LDX.w .cgrams, Y
+	INY
+	INY
 
-	STY.b $00
+	STX.b $00
 	LDA.b ($00)
+	ASL
+	TAX
+
+	LDA.l COLORS_YAY, X
 	STA.w $2122
 
-	INY
-	STY.b $00
-	LDA.b ($00)
+	INX
+	LDA.l COLORS_YAY, X
 	STA.w $2122
 
 	BRA .next_color
 
 .done_color
 	SEP #$30
-
-
 	JSL ReadJoyPad_long
-	REP #$10
-	SEP #$20
-	JSL CacheSA1Stuff
+
+	LDA.b $F0 : STA.w SA1IRAM.CopyOf_F0
+	LDA.b $F2 : STA.w SA1IRAM.CopyOf_F2
+	LDA.b $F4 : STA.w SA1IRAM.CopyOf_F4
+	LDA.b $F6 : STA.w SA1IRAM.CopyOf_F6
+
 
 	REP #$20
 	LDA.w #.nothing

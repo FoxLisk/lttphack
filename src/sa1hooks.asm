@@ -14,6 +14,11 @@ struct SA1IRAM $003000
 	.CopyOf_F6: skip 1
 	.CopyOf_F4: skip 1
 
+	.CONTROLLER_1_NEW:
+
+	.JOYPAD2_NEW: skip 2
+
+	.CachedThisFrame: skip 1
 	.cm_submodule: skip 2
 	.cm_cursor: skip 1 ; keep these together
 	.cm_current_menu: skip 4
@@ -22,17 +27,20 @@ struct SA1IRAM $003000
 	.cm_select_address: skip 4
 	.cm_select_params:
 	.cm_draw_color: skip 2
-	.cm_draw_type_offset: skip 2
-	.cm_draw_filler: skip 2
 
 	; these can be shared because they're never used at the same time
 	.cm_writer:
+	.cm_draw_type_offset: skip 2
+	.cm_draw_filler: skip 2
+
 	.cm_leftright: skip 1 ; N=left V=right
 	.cm_updown: skip 1 ; N=up V=down
 	.cm_ax: skip 1 ; N=A V=X
+	.cm_y: skip 1 ; N=l V=r
 	.cm_shoulder: skip 1 ; N=l V=r
+	skip 1 ; for safety
 
-	.cm_writer_args: skip 2
+	.cm_writer_args: skip 4
 
 .savethis_start
 	.TIMER_FLAG: skip 2
@@ -206,57 +214,59 @@ incsrc sa1hud.asm
 incsrc sa1sram.asm
 
 pullpc
-CacheSA1Stuff:
-	LDX.b $10 : STX.w SA1IRAM.CopyOf_10
-	LDX.b $1A : STX.w SA1IRAM.CopyOf_1A
-	LDX.b $20 : STX.w SA1IRAM.CopyOf_20
-	LDX.b $22 : STX.w SA1IRAM.CopyOf_22
-	LDX.b $2A : STX.w SA1IRAM.CopyOf_2A
-	LDX.b $30 : STX.w SA1IRAM.CopyOf_30
-	LDA.b $6C : STA.w SA1IRAM.CopyOf_6C
-	LDX.b $A0 : STX.w SA1IRAM.CopyOf_A0
-	LDX.b $A4 : STX.w SA1IRAM.CopyOf_A4
+;===============================================================================
+; CacheSA1Stuff is critical to balancing lag
+; so if it isn't called from the HUD, we need to call it here
+; otherwise, we're a lot less laggy than vanilla
+; this is run every frame
+;===============================================================================
+WasteTimeIfNeeded:
+	LSR.w SA1IRAM.CachedThisFrame
+	BCS ++
 
-	LDA.b $B0 : STA.w SA1IRAM.CopyOf_B0
-	LDX.b $E2 : STX.w SA1IRAM.CopyOf_E2
-	LDX.b $E8 : STX.w SA1IRAM.CopyOf_E8
+	JSL CacheSA1Stuff
+
+++	STZ.b $12
+	JML $008034
+
+CacheSA1Stuff:
+	REP #$20 ; 16 bit first
+	LDA.b $10 : STA.w SA1IRAM.CopyOf_10
+	LDA.b $1A : STA.w SA1IRAM.CopyOf_1A
+	LDA.b $20 : STA.w SA1IRAM.CopyOf_20
+	LDA.b $22 : STA.w SA1IRAM.CopyOf_22
+	LDA.b $2A : STA.w SA1IRAM.CopyOf_2A
+	LDA.b $30 : STA.w SA1IRAM.CopyOf_30
+	LDA.b $A0 : STA.w SA1IRAM.CopyOf_A0
+	LDA.b $A4 : STA.w SA1IRAM.CopyOf_A4
+	LDA.b $E2 : STA.w SA1IRAM.CopyOf_E2
+	LDA.b $E8 : STA.w SA1IRAM.CopyOf_E8
+	LDA.w $0B08 : STA.w SA1IRAM.CopyOf_0B08
+	LDA.l $7EF36C : STA.w SA1IRAM.CopyOf_7EF36C
+
+	; 8 bit stuff
+	SEP #$20
+	LDA.b $6C : STA.w SA1IRAM.CopyOf_6C
 	LDA.b $EE : STA.w SA1IRAM.CopyOf_EE
-	LDA.b $F0 : STA.w SA1IRAM.CopyOf_F0
-	LDA.b $F2 : STA.w SA1IRAM.CopyOf_F2
-	LDA.b $F4 : STA.w SA1IRAM.CopyOf_F4
-	LDA.b $F6 : STA.w SA1IRAM.CopyOf_F6
+	LDA.b $B0 : STA.w SA1IRAM.CopyOf_B0
 	LDA.w $02A2 : STA.w SA1IRAM.CopyOf_02A2
 	LDA.w $02FA : STA.w SA1IRAM.CopyOf_02FA
 	LDA.w $04A0 : STA.w SA1IRAM.CopyOf_04A0
-	LDX.w $0B08 : STX.w SA1IRAM.CopyOf_0B08
 	LDA.w $04B4 : STA.w SA1IRAM.CopyOf_04B4
-
 	LDA.l $7EC011 : STA.w SA1IRAM.CopyOf_7EC011
-	LDA.l $7EF36C : STA.w SA1IRAM.CopyOf_7EF36C
-	LDA.l $7EF36D : STA.w SA1IRAM.CopyOf_7EF36D
 
-	; don't want to be transferring too much
-	; certain things will get designated as slow
-	LDA.b !ram_extra_sa1_required
-	BEQ .noextra
-
-	PHP
-	JSR Extra_SA1_Transfers
-	PLP
-
-.noextra
-	LDA.b #$81
-	STA.w $2200
+	INC.w SA1IRAM.CachedThisFrame ; flag this
 	RTL
 
 Extra_SA1_Transfers:
+	SEP #$30
 	LDA.l !ram_superwatch
 	ASL
 	TAX
 	SEP #$30
 	JSR (.superwatchtransfers, X)
 
-	RTS
+	RTL
 
 .superwatchtransfers
 	dw ..off

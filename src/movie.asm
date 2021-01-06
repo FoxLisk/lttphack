@@ -5,13 +5,6 @@ pushpc
 ; compact movieformat (not implemented, not sure if I will)
 ; BYST udlr | AXLR Pnnn | NNNN NNNN
 
-
-; Hooking NMI_ReadJoypads
-org $0083D1
-	;JSL movie_readjoypads
-	;RTS
-
-
 ;org RandomNumGen
 ;    PHX : PHP
 ;    JSL movie_rng

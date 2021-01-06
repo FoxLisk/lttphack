@@ -1,11 +1,11 @@
 CONFIG_SUBMENU:
-%cm_header("CONFIGURATION", 5)
+%menu_header("CONFIGURATION", 6)
 
 ;===============================================================================
-%cm_toggle("Rerandomize", !ram_rerandomize_toggle)
+%toggle("Rerandomize", !ram_rerandomize_toggle)
 
 ;===============================================================================
-%cm_toggle_func("Music", !ram_feature_music, this)
+%toggle_func("Music", !ram_feature_music, this)
 
 	LDA.w !ram_feature_music
 	BNE ++
@@ -14,10 +14,10 @@ CONFIG_SUBMENU:
 ++	JML unmute_music
 
 ;===============================================================================
-%cm_toggle("Death reload", !ram_autoload_preset)
+%toggle("Death reload", !ram_autoload_preset)
 
 ;===============================================================================
-%cm_choice_here("Preset cat", !ram_preset_category, 7)
+%choice_here("Preset cat", !ram_preset_category, 7)
 	%list_item("NMG")
 	%list_item("Hundo")
 	%list_item("Low")
@@ -27,7 +27,7 @@ CONFIG_SUBMENU:
 	%list_item("Any RMG")
 
 ;===============================================================================
-%cm_choice_here("HUD font", !ram_hud_font, 24)
+%choice_here("HUD font", !ram_hud_font, 24)
 	%list_item("Classic")
 	%list_item("Normal")
 	%list_item("Italic")
@@ -53,6 +53,8 @@ CONFIG_SUBMENU:
 	%list_item("S. Metroid")
 	%list_item("Tazmania")
 
+;===============================================================================
+%submenu("Color config", COLOR_CONFIG_SUBMENU)
 
 
 
@@ -60,31 +62,30 @@ CONFIG_SUBMENU:
 !color_count = 20
 !color_id = -1
 
-#COLORS_HOORAY:
+COLORS_YAY:
 	fillword $0000 : fill !color_count*2
 
 macro fixed_color(val, name)
+	!color_id #= !color_id+1
 	%list_item("<name>")
 	pushpc
-		org COLORS_HOORAY+!color_id*2 : dw color(<val>)
+		org COLORS_YAY+!color_id*2 : dw color(<val>)
 	pullpc
-	!color_count #= !color_count+1
 endmacro
 
-%cm_header("COLOR CONFIG", 7)
-%cm_choice_func("Menu BG", !ram_hud_bg, !color_count, set_color, color_list)
+COLOR_CONFIG_SUBMENU:
+%menu_header("COLOR CONFIG", 7)
+%choice_func("Menu BG", !ram_hud_bg, !color_count, set_color, color_list)
 
-%cm_choice_func("Header FG", !ram_hud_header_fg, !color_count, set_color, color_list)
-%cm_choice_func("Header HL", !ram_hud_header_hl, !color_count, set_color, color_list)
-%cm_choice_func("Header BG", !ram_hud_header_bg, !color_count, set_color, color_list)
+%choice_func("Header FG", !ram_hud_header_fg, !color_count, set_color, color_list)
+%choice_func("Header HL", !ram_hud_header_hl, !color_count, set_color, color_list)
+%choice_func("Header BG", !ram_hud_header_bg, !color_count, set_color, color_list)
 
-%cm_choice_func("Selection FG", !ram_hud_sel_fg, !color_count, set_color, color_list)
-%cm_choice_func("Selection BG", !ram_hud_sel_bg, !color_count, set_color, color_list)
+%choice_func("Selection FG", !ram_hud_sel_fg, !color_count, set_color, color_list)
+%choice_func("Selection BG", !ram_hud_sel_bg, !color_count, set_color, color_list)
 
-%cm_choice_func("Inactive FG", !ram_hud_dis_fg, !color_count, set_color, color_list)
-;%cm_choice_func("Inactive BG", !ram_hud_dis_bg, !color_count, set_color, color_list)
-
-
+%choice_func("Inactive FG", !ram_hud_dis_fg, !color_count, set_color, color_list)
+;%choice_func("Inactive BG", !ram_hud_dis_bg, !color_count, set_color, color_list)
 
 set_color:
 	BIT.b SA1IRAM.cm_ax
@@ -107,8 +108,8 @@ set_color:
 	db 10 ; Header HL: lui
 	db  0 ; Header BG: black
 
-	db  8 ; Selection FG: me
-	db  9 ; Selection BG: mine
+	db  9 ; Selection FG: me
+	db  8 ; Selection BG: mine
 
 	db  3 ; Inactcive FG: gray
 
@@ -130,11 +131,11 @@ color_list:
 	%fixed_color($20A8F8, "Glan blue") ; fantasy
 
 	%fixed_color($F8B000, "Mike orange")
-	%fixed_color($F858A8, "Pink")
+	%fixed_color($782878, "Purple")
 	%fixed_color($605800, "Garbage")
 	%fixed_color($8090A0, "Blilver")
 
-	%fixed_color($000000, "Black")
-	%fixed_color($000000, "Black")
-	%fixed_color($000000, "Black")
-	%fixed_color($000000, "Black")
+	%fixed_color($F858A8, "Pink")
+	%fixed_color($F76D61, "Peach42")
+	%fixed_color($2AA8D9, "Siriusly?")
+	%fixed_color($BADA55, "Almost BADA55")

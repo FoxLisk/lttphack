@@ -65,9 +65,10 @@ hud_font:
 	incbin ../resources/hud_font2.2bpp
 	incbin ../resources/hud_font3.2bpp
 
-cm_hud_table:
+cm_gfx:
 	incbin ../resources/menu_font1.2bpp
 	incbin ../resources/menu_font2.2bpp
+	incbin ../resources/menu_font3.2bpp
 
 hud_inputchars:
 	incbin ../resources/inputchars.2bpp

@@ -29,6 +29,8 @@ struct SA1RAM $406000
 	.HUD skip $800 ; bg3 HUD
 	.MENU skip $800 ; practice menu
 
+	.SETTINGS: skip $400
+
 	.SNES_NMI_VECTOR: skip 4
 	.SNES_NMI_args: skip 8
 
@@ -39,8 +41,6 @@ struct SA1RAM $406000
 	.SW_BUFFER_r3: skip 64
 	.SW_BUFFER_r4: skip 64
 	.SW_BUFFER_r5: skip 64
-
-	.SETTINGS: skip $400
 
 	.last_frame_did_saveload: skip 2
 
@@ -94,9 +94,9 @@ struct SA1RAM $406000
 	.cm_last_input: skip 2
 	.opened_menu_manually: skip 2
 
-	.list_item_bow: skip 1
-	.list_item_bottle: skip 1
-	.list_item_mirror: skip 1
+	.cm_item_bow: skip 1
+	.cm_item_bottle: skip 1
+	.cm_item_mirror: skip 1
 	.cm_equipment_maxhp: skip 1
 	.cm_old_crystal_switch: skip 2
 	.cm_crystal_switch: skip 2
@@ -221,7 +221,7 @@ endmacro
 
 %def_perm_sram("hud_font", 0)
 %def_perm_sram("input_display", !ON)
-%def_perm_sram("heart_display", !ON)
+%def_perm_sram("heart_display", 0)
 %def_perm_sram("feature_music", !ON)
 
 %def_perm_sram("counters_real", !ON)
@@ -421,7 +421,10 @@ LoadGearPalettes_bunny = $02FD8A
 !ram_item_net = $7EF34D
 !ram_item_book = $7EF34E
 !ram_item_bottle = $7EF34F
-	!ram_item_bottle_array = $7EF35C
+	!ram_item_bottle_1 = $7EF35C
+	!ram_item_bottle_2 = $7EF35D
+	!ram_item_bottle_3 = $7EF35E
+	!ram_item_bottle_4 = $7EF35F
 !ram_item_somaria = $7EF350
 !ram_item_byrna = $7EF351
 !ram_item_cape = $7EF352

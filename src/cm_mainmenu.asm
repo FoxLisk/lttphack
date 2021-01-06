@@ -1,4 +1,4 @@
-macro cm_header(title)
+macro header(title)
 	table ../resources/header.tbl
 		db $24, "<title>", $FF
 	table ../resources/normal.tbl
@@ -8,64 +8,64 @@ macro list_item(title)
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_preset(title, addr)
+macro preset(title, addr)
 	dw !CM_ACTION_PRESET
 	dw <addr>
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_toggle(title, addr)
+macro toggle(title, addr)
 	dw !CM_ACTION_TOGGLE
 	dl <addr>
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_toggle_jsr(title, addr)
+macro toggle_jsr(title, addr)
 	dw !CM_ACTION_TOGGLE_JSR
 	dw .toggle
 	dl <addr>
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_submenu(title, addr)
+macro submenu(title, addr)
 	dw !CM_ACTION_SUBMENU
 	dl <addr>
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_numfield(title, addr, start, end, increment)
+macro numfield(title, addr, start, end, increment)
 	dw !CM_ACTION_NUMFIELD
 	dl <addr>
 	db <start>, <end>, <increment>
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_toggle_bit(title, addr, mask)
+macro toggle_bit(title, addr, mask)
 	dw !CM_ACTION_TOGGLE_BIT
 	dl <addr>
 	db <mask>
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_jsr(title)
+macro jsr(title)
 	dw !CM_ACTION_JSR
 	dw .routine
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_ctrl_shortcut(title, addr)
+macro ctrl_shortcut(title, addr)
 	dw !CM_ACTION_CTRL_SHORTCUT
 	dl <addr>
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_ctrl_shortcut_final(title, addr)
+macro ctrl_shortcut_final(title, addr)
 	dw !CM_ACTION_CTRL_SHORTCUT_FINAL
 	dl <addr>
 	db $24, "<title>", $FF
 endmacro
 
-macro cm_movie(title, slot)
+macro movie(title, slot)
 	dw !CM_ACTION_MOVIE
 	db <slot>
 	db $00, "<title>", $FF
@@ -86,7 +86,7 @@ cm_mainmenu_indices:
 	dw cm_main_goto_config
 ;    dw cm_main_goto_movies
 	dw !menu_end
-	%cm_header("LTTPHACK !VERSION")
+	%menu_header("LTTPHACK !VERSION")
 
 incsrc cm_mainmenu_items.asm
 incsrc cm_mainmenu_equipment.asm

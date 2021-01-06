@@ -277,16 +277,16 @@ cm_init_item_variables:
 	LDA.b #$01
 
 .store_bow
-	STA.w SA1RAM.list_item_bow
+	STA.w SA1RAM.cm_item_bow
 
 	; Bottle
 	LDA.l !ram_item_bottle : BEQ .store_bottle
 	LDA.b #$01
 .store_bottle
-	STA.w SA1RAM.list_item_bottle
+	STA.w SA1RAM.cm_item_bottle
 
 	; Mirror
-	LDA.l !ram_item_mirror : LSR : STA.w SA1RAM.list_item_mirror
+	LDA.l !ram_item_mirror : LSR : STA.w SA1RAM.cm_item_mirror
 
 	; MaxHP
 	LDA.l !ram_equipment_maxhp

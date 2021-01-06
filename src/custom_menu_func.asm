@@ -1,4 +1,3 @@
-
 CMDO_SAVE_ADDRESS_LONG:
 	JSR .continue
 
@@ -74,23 +73,34 @@ CMDO_TOGGLE_BIT_LONG:
 	BMI .toggle
 	BVS .clear
 
+	BIT.b SA1IRAM.cm_leftright
+	BMI .toggle
+	BVS .toggle
+
+	BIT.b SA1IRAM.cm_y
+	BMI .enable
+
 	CLC
 	RTS
 
 .clear
-	EOR.b #$FF
-	STA.b SA1IRAM.cm_writer_args+1 ; get complement for the AND
-	STZ.b SA1IRAM.cm_writer_args+0 ; ORA in nothing
+	EOR.b #$FF ; get complement for the AND
+	STZ.b SA1IRAM.cm_writer_args+0 ; EOR in nothing
+	JSL CM_MenuSFX_empty
+	BRA CMDO_TOGGLE_SAVE_A
 
-	JMP CMDO_PERFORM_TOGGLE
+.enable
+	STA.b SA1IRAM.cm_writer_args+0 ; EOR will toggle but
+	STA.b SA1IRAM.cm_writer_args+2 ; it also gets ORA'd in
+
+	JSL CM_MenuSFX_fill
+	BRA CMDO_TOGGLE_SAVE_B
 
 .toggle
 	STA.b SA1IRAM.cm_writer_args+0
 
 	LDA.b #$FF
-	STA.b SA1IRAM.cm_writer_args+1
-
-	JMP CMDO_PERFORM_TOGGLE
+	BRA CMDO_TOGGLE_SAVE_A
 
 CMDO_TOGGLE_BIT7_LONG:
 CMDO_TOGGLE_BIT7_LONG_CUSTOMTEXT:
@@ -136,16 +146,49 @@ CMDO_TOGGLE_LONG:
 
 	LDA.b #$01
 	STA.b SA1IRAM.cm_writer_args+0
+
+	BIT.b SA1IRAM.cm_ax
+	BVS .clear
+	BMI .toggle
+
+	BIT.b SA1IRAM.cm_leftright
+	BMI .toggle
+	BVS .toggle
+
+	BIT.b SA1IRAM.cm_y
+	BMI .enable
+
+	CLC
+	RTS
+
+.toggle
+#CMDO_TOGGLE_SAVE_A:
+	STZ.b SA1IRAM.cm_writer_args+2
+
+#CMDO_TOGGLE_SAVE_B:
 	STA.b SA1IRAM.cm_writer_args+1
 
-CMDO_PERFORM_TOGGLE:
-	SEP #$21 ; set the carry here, since that means something happened
+#CMDO_PERFORM_TOGGLE:
+	SEC ; set the carry here, since that means something happened
+
 	LDA.b [SA1IRAM.cm_writer]
 	EOR.b SA1IRAM.cm_writer_args+0
 	AND.b SA1IRAM.cm_writer_args+1
+	ORA.b SA1IRAM.cm_writer_args+2
 	STA.b [SA1IRAM.cm_writer]
 
-	JMP CM_MenuSFX_toggle
+	JSL CM_MenuSFX_bink
+	RTS
+
+.clear
+	JSL CM_MenuSFX_empty
+	LDA.b #$00
+	BRA CMDO_TOGGLE_SAVE_A
+
+.enable
+	STA.b SA1IRAM.cm_writer_args+2
+	JSL CM_MenuSFX_fill
+	BRA CMDO_TOGGLE_SAVE_B
 
 ;===============================================================================
 CMDO_TOGGLE_FUNC:
@@ -158,15 +201,30 @@ CMDO_TOGGLE_LONG_FUNC_CUSTOMTEXT:
 	JSR CMDO_TOGGLE_LONG
 	BRA CMDO_PERFORM_FUNC
 
-CMDO_FUNC:
+CMDO_FUNC_FILTERED:
+	PHD
+
+	PEA.w $0000
+	PLD
+
+	JSR CMDO_FUNC
+
 	SEP #$20
-	LDA.b SA1IRAM.cm_ax ; get A press in carry
-	ASL
+	STZ.b $15
+
+	PLD
+
+	RTS
 
 ; jump here for anything with an attached function
 ; expects Y to point to the current function argument
 ; carry means a function should happen
-CMDO_PERFORM_FUNC:
+CMDO_FUNC:
+	LDA.b SA1IRAM.cm_ax ; get A press in carry
+	ASL
+
+
+#CMDO_PERFORM_FUNC:
 	BCC .exit
 
 	JSR CMDO_SAVE_ADDRESS_LONG
@@ -177,7 +235,8 @@ CMDO_PERFORM_FUNC:
 	JML.w [SA1IRAM.cm_writer]
 
 .return
-	JSR CM_MenuSFX_switch
+	SEC
+	JSL CM_MenuSFX_switch
 
 .exit
 	RTS
@@ -185,11 +244,37 @@ CMDO_PERFORM_FUNC:
 CMDO_CHOICE_LONG_FUNC:
 CMDO_CHOICE_LONG_FUNC_PRGTEXT:
 	JSR CMDO_CHOICE_LONG
+	INY
+	INY
+	INY
 	BRA CMDO_PERFORM_FUNC
 
 #CMDO_CHOICE_FUNC:
 #CMDO_CHOICE_FUNC_PRGTEXT:
 	JSR CMDO_CHOICE
+	INY
+	INY
+	INY
+	BRA CMDO_PERFORM_FUNC
+
+CMDO_CHOICE_LONG_FUNC_FILTERED:
+	JSR CMDO_CHOICE_LONG
+	INY
+	INY
+	INY
+	BRA CMDO_FUNC_FILTERED
+
+;===============================================================================
+CMDO_NUMFIELD_FUNC:
+CMDO_NUMFIELD_FUNC_HEX:
+CMDO_NUMFIELD_FUNC_PRGTEXT:
+	JSR CMDO_NUMFIELD
+	BRA CMDO_PERFORM_FUNC
+
+CMDO_NUMFIELD_LONG_FUNC:
+CMDO_NUMFIELD_LONG_FUNC_HEX:
+CMDO_NUMFIELD_LONG_FUNC_PRGTEXT:
+	JSR CMDO_NUMFIELD_LONG
 	BRA CMDO_PERFORM_FUNC
 
 ;===============================================================================
@@ -206,7 +291,7 @@ CMDO_CHOICE_LONG_PRGTEXT:
 .continue
 	LDA.b [SA1IRAM.cm_writer]
 	BIT.b SA1IRAM.cm_ax
-	BVS .clear
+	BVS .empty
 	BMI .increment
 
 	BIT.b SA1IRAM.cm_leftright
@@ -218,13 +303,13 @@ CMDO_CHOICE_LONG_PRGTEXT:
 
 .decrement
 	CMP.b #$00
-	BEQ .max
+	BNE .not_max
 
-	DEC
-	BRA .set
-
-.max
+	; the max value needs to be decremented too
 	LDA.b [SA1IRAM.cm_current_selection], Y
+
+.not_max
+	DEC
 	BRA .set
 
 .increment
@@ -239,23 +324,160 @@ CMDO_CHOICE_LONG_PRGTEXT:
 	STA.b [SA1IRAM.cm_writer]
 	INY
 	SEC ; carry set = actionable, so do functions
+	JSL CM_MenuSFX_bink
 	RTS
+
+.empty
+	JSL CM_MenuSFX_empty
+	BRA .clear
 
 ;===============================================================================
 CMDO_SUBMENU:
+	BIT.b SA1IRAM.cm_ax
+	BPL .no
 
+	JSR EmptyCurrentMenu
+	JSR CM_PushMenuToStack
 
+	REP #$20
+	LDA.b [SA1IRAM.cm_current_selection]
+	AND.w #$FF00
+	STA.b SA1IRAM.cm_cursor+0
 
-	JMP CM_MenuSFX_submenu
+	LDY.w #$02
+	LDA.b [SA1IRAM.cm_current_selection], Y
+	STA.b SA1IRAM.cm_cursor+2
 
+	JSR DrawCurrentMenu
+	JSL NMI_RequestFullMenuUpdate
+
+	JSL CM_MenuSFX_submenu
+
+.no
+	RTS
 
 CMDO_PRESET:
 CMDO_SUBMENU_VARIABLE:
-CMDO_NUMFIELD:
-CMDO_NUMFIELD_LONG:
-CMDO_NUMFIELD_FUNC:
-CMDO_NUMFIELD_LONG_FUNC:
+
 CMDO_CTRL_SHORTCUT:
 CMDO_CTRL_SHORTCUT_FINAL:
+
+
+RTS
+
+;===============================================================================
+CMDO_NUMFIELD:
+CMDO_NUMFIELD_HEX:
+	JSR CMDO_SAVE_ADDRESS_00
+	BRA .continue
+
+#CMDO_NUMFIELD_LONG:
+#CMDO_NUMFIELD_LONG_HEX:
+#CMDO_NUMFIELD_LONG_2DIGITS:
+	JSR CMDO_SAVE_ADDRESS_LONG
+
+.continue
+	LDA.b [SA1IRAM.cm_writer]
+	BIT.b SA1IRAM.cm_ax
+	BVS .delete
+
+	; Y currently points to our minimum value
+	BIT.b SA1IRAM.cm_y
+	BMI .get_max_min
+
+	BIT.b SA1IRAM.cm_leftright
+	BMI .decrement
+
+	INY ; Y now points to our maximum
+	BVS .increment
+
+	INY ; now point to slider size or whatever you wanna call it
+	BIT.b SA1IRAM.cm_shoulder
+	BMI .dec_big
+	BVS .inc_big
+
+	INY
+	CLC
+	RTS
+
+.delete
+	JSL CM_MenuSFX_empty
+	BRA .clear_min
+
+.topoff
+	JSL CM_MenuSFX_fill
+	BRA .get_max_min
+
+.increment
+	CMP.b [SA1IRAM.cm_current_selection], Y
+	INC
+	BCC .in_range_max
+
+.clear_max
+	DEY ; point to min
+
+.clear_min
+	LDA.b [SA1IRAM.cm_current_selection], Y
+
+.in_range_min
+	INY ; point to max
+
+.in_range_max
+	INY ; point to slide
+
+.in_range_slide
+.set
+	STA.b [SA1IRAM.cm_writer]
+
+	INY ; this should now point to after slide
+	SEC
+	JSL CM_MenuSFX_bink
+	RTS
+
+.decrement
+	DEC ; to check for 0 just in case
+	BMI .get_max_min
+
+	; now our new value against the minimum
+	CMP.b [SA1IRAM.cm_current_selection], Y
+	INY ; point this to max, just in case we need it
+	BCS .in_range_max
+	BRA .get_max_max ; since we're already pointed there
+
+.get_max_min
+	INY
+
+.get_max_max
+	LDA.b [SA1IRAM.cm_current_selection], Y
+	BRA .in_range_max
+
+.dec_big ; also these shouldn't wrap on overflow
+	SEC
+	SBC.b [SA1IRAM.cm_current_selection], Y
+	DEY ; pointing to max
+	BCC .clear_max ; if we borrowed here, we need to floor ourselves
+
+	DEY ; pointing to min
+	CMP.b [SA1IRAM.cm_current_selection], Y
+	BCS .in_range_min ; we're fine
+	BRA .clear_min ; don't go past the minimum
+
+.inc_big
+	CLC
+	ADC.b [SA1IRAM.cm_current_selection], Y
+	DEY ; pointing to max
+	BCS .get_max_max ; if we went too high, cap now
+
+	CMP.b [SA1IRAM.cm_current_selection], Y
+	BCS .get_max_max ; will cap if we match, but that's fine
+	BRA .in_range_max
+
+
+
+
+
+
+
+
 
 
