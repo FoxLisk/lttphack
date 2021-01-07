@@ -42,6 +42,16 @@ struct SA1IRAM $003000
 
 	.cm_writer_args: skip 4
 
+	.preset_addr: skip 4
+	.preset_prog: skip 4
+	.preset_reader: skip 4
+	.preset_reader2: skip 4
+	.preset_writer: skip 4
+	.preset_type: skip 2
+	.preset_scratch: skip 8
+
+
+
 .savethis_start
 	.TIMER_FLAG: skip 2
 
@@ -358,8 +368,6 @@ InitSA1:
 	STZ.w $2200
 
 	SEP #$30
-	LDA.b #$81
-	STA.w $4200
 	RTL
 
 SA1Reset:

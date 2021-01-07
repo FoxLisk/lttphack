@@ -20,9 +20,9 @@ org $228000
 incsrc tiles.asm
 
 org $238000
-incsrc init.asm
 incsrc rng.asm
 incsrc misc.asm
+incsrc init.asm
 
 org $248000
 table ../resources/normal.tbl

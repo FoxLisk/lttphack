@@ -5,7 +5,7 @@
 ;===============================================================================
 cm_mainmenu:
 %menu_header("LTTPHACK !VERSION", 8)
-;	%submenu("Presets", preset_menu)
+	%submenu_variable("Presets", PRESET_SUBMENU)
 	%submenu("Y Items", ITEMS_SUBMENU)
 	%submenu("Equipment", EQUIPMENT_SUBMENU)
 	%submenu("Game state", GAMESTATE_SUBMENU)

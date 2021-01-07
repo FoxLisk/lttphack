@@ -114,11 +114,38 @@ pushpc
 %MenuAction("HEADER", 0, $2F)
 
 ;-------------------------------------------------------------------------------
-%MenuAction("PRESET", 3, $6E)
-macro preset(name, addr)
+%MenuAction("PRESET_UW", 3, $6E)
+macro preset_uw(name)
 	%add_self()
-	db !CM_PRESET
-	dw <addr>
+	db !CM_PRESET_UW
+	dl ?here
+	db "<name>", $FF
+
+#?here:
+endmacro
+
+macro preset_uw_copy(name, addr)
+	%add_self()
+	db !CM_PRESET_UW
+	dl <addr>
+	db "<name>", $FF
+endmacro
+
+
+%MenuAction("PRESET_OW", 3, $6E)
+macro preset_ow(name)
+	%add_self()
+	db !CM_PRESET_OW
+	dl ?here
+	db "<name>", $FF
+
+#?here:
+endmacro
+
+macro preset_ow_copy(name, addr)
+	%add_self()
+	db !CM_PRESET_OW
+	dl <addr>
 	db "<name>", $FF
 endmacro
 
