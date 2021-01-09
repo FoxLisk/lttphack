@@ -1,10 +1,11 @@
 !SELECTED = $3480
 !UNSELECTED = $3800
+!SHORTCUTTING = $3800
 !HEADER = $3100
 
 ;===============================================================================
 cm_mainmenu:
-%menu_header("LTTPHACK !VERSION", 8)
+%menu_header("LTTPHACK !VERSION", 10)
 	%submenu_variable("Presets", PRESET_SUBMENU)
 	%submenu("Y Items", ITEMS_SUBMENU)
 	%submenu("Equipment", EQUIPMENT_SUBMENU)
@@ -12,7 +13,7 @@ cm_mainmenu:
 	%submenu("Link state", LINKSTATE_SUBMENU)
 	%submenu("Gameplay", GAMEPLAY_SUBMENU)
 	%submenu("RNG control", RNG_SUBMENU)
-;	%submenu("Shortcuts", preset_menu)
+	%submenu("Shortcuts", SHORTCUTS_SUBMENU)
 	%submenu("HUD extras", HUDEXTRAS_SUBMENU)
 	%submenu("Settings", CONFIG_SUBMENU)
 
@@ -94,16 +95,9 @@ CM_Return:
 	JSL CleanVRAMSW
 
 	SEP #$30
-	LDA.w SA1RAM.preset_type
-	BEQ .no_preset
-
-	;JSL preset_load_next_frame
-	BRA ++
-
-.no_preset
 	LDA.b #$15 : STA.w $012E
 
-++	INC.b $12
+	INC.b $12
 	INC.b $15 ; trigger a CGRAM update
 	JSL SNES_DISABLE_CUSTOM_NMI
 
@@ -111,6 +105,18 @@ CM_Return:
 	RTL
 
 CM_ShortcutConfig:
+	REP #$30
+	LDY.w #$0001
+	JSR CMDO_SAVE_ADDRESS_LONG
+
+	REP #$20
+	LDA.b SA1IRAM.CONTROLLER_1
+	STA.b [SA1IRAM.cm_writer]
+
+	SEP #$30
+	LDY.b SA1IRAM.cm_cursor
+	JSR DrawCurrentRow_ShiftY
+	JSL NMI_RequestCurrentRowUpdateUnless
 	RTS
 
 CM_PrepPPU:
@@ -228,6 +234,8 @@ CM_MenuSFX:
 	PEA.w $0026
 	BRA .continue
 
+.setshortcut
+.setshortcut_done
 .switch
 	PEA.w $2500
 	BRA .continue

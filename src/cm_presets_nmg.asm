@@ -3,7 +3,7 @@ cm_nmg_submenu_presets:
 	dw cm_nmg_presets_goto_eastern
 	dw cm_nmg_presets_goto_desert
 	dw cm_nmg_presets_goto_hera
-	dw cm_nmg_presets_goto_atower
+	dw cm_nmg_presets_goto_aga
 	dw cm_nmg_presets_goto_pod
 	dw cm_nmg_presets_goto_thieves
 	dw cm_nmg_presets_goto_skull
@@ -23,64 +23,64 @@ cm_nmg_presets_goto_escape:
 	%submenu("Hyrule Castle", cm_nmg_presets_escape)
 
 cm_nmg_presets_escape:
-	dw cm_nmg_esc_bed
-	dw cm_nmg_esc_courtyard
-	dw cm_nmg_esc_entrance
-	dw cm_nmg_esc_1st_keyguard
-	dw cm_nmg_esc_stealth_room
-	dw cm_nmg_esc_2nd_keyguard
-	dw cm_nmg_esc_ball_n_chains
-	dw cm_nmg_esc_backtracking
-	dw cm_nmg_esc_keyguard_revisited
-	dw cm_nmg_esc_throne_room
-	dw cm_nmg_esc_snake_avoidance_room
-	dw cm_nmg_esc_water_rooms
-	dw cm_nmg_esc_keyrat
-	dw cm_nmg_esc_last_two_screens
+	dw cm_nmg_escape_bed
+	dw cm_nmg_escape_courtyard
+	dw cm_nmg_escape_entrance
+	dw cm_nmg_escape_1st_keyguard
+	dw cm_nmg_escape_stealth_room
+	dw cm_nmg_escape_2nd_keyguard
+	dw cm_nmg_escape_ball_n_chains
+	dw cm_nmg_escape_backtracking
+	dw cm_nmg_escape_keyguard_revisited
+	dw cm_nmg_escape_throne_room
+	dw cm_nmg_escape_snake_avoidance_room
+	dw cm_nmg_escape_water_rooms
+	dw cm_nmg_escape_keyrat
+	dw cm_nmg_escape_last_two_screens
 	dw !menu_end
 	%menu_header("HYRULE CASTLE")
 
-cm_nmg_esc_bed:
-	%preset("Link's Bed", preset_nmg_esc_bed)
+cm_nmg_escape_bed:
+	%preset("Link's Bed", preset_nmg_escape_bed)
 
-cm_nmg_esc_courtyard:
-	%preset("Courtyard", preset_nmg_esc_courtyard)
+cm_nmg_escape_courtyard:
+	%preset("Courtyard", preset_nmg_escape_courtyard)
 
-cm_nmg_esc_entrance:
-	%preset("Entrance", preset_nmg_esc_entrance)
+cm_nmg_escape_entrance:
+	%preset("Entrance", preset_nmg_escape_entrance)
 
-cm_nmg_esc_1st_keyguard:
-	%preset("1st Key Guard", preset_nmg_esc_1st_keyguard)
+cm_nmg_escape_1st_keyguard:
+	%preset("1st Key Guard", preset_nmg_escape_1st_keyguard)
 
-cm_nmg_esc_stealth_room:
-	%preset("Stealth Room", preset_nmg_esc_stealth_room)
+cm_nmg_escape_stealth_room:
+	%preset("Stealth Room", preset_nmg_escape_stealth_room)
 
-cm_nmg_esc_2nd_keyguard:
-	%preset("2nd Key Guard", preset_nmg_esc_2nd_keyguard)
+cm_nmg_escape_2nd_keyguard:
+	%preset("2nd Key Guard", preset_nmg_escape_2nd_keyguard)
 
-cm_nmg_esc_ball_n_chains:
-	%preset("Ball'n Chains", preset_nmg_esc_ball_n_chains)
+cm_nmg_escape_ball_n_chains:
+	%preset("Ball'n Chains", preset_nmg_escape_ball_n_chains)
 
-cm_nmg_esc_backtracking:
-	%preset("Backtracking", preset_nmg_esc_backtracking)
+cm_nmg_escape_backtracking:
+	%preset("Backtracking", preset_nmg_escape_backtracking)
 
-cm_nmg_esc_keyguard_revisited:
-	%preset("Key Guard Revisited", preset_nmg_esc_keyguard_revisited)
+cm_nmg_escape_keyguard_revisited:
+	%preset("Key Guard Revisited", preset_nmg_escape_keyguard_revisited)
 
-cm_nmg_esc_throne_room:
-	%preset("Throne Room", preset_nmg_esc_throne_room)
+cm_nmg_escape_throne_room:
+	%preset("Throne Room", preset_nmg_escape_throne_room)
 
-cm_nmg_esc_snake_avoidance_room:
-	%preset("Snake Avoidance Room", preset_nmg_esc_snake_avoidance_room)
+cm_nmg_escape_snake_avoidance_room:
+	%preset("Snake Avoidance Room", preset_nmg_escape_snake_avoidance_room)
 
-cm_nmg_esc_water_rooms:
-	%preset("Sewer Rooms", preset_nmg_esc_water_rooms)
+cm_nmg_escape_water_rooms:
+	%preset("Sewer Rooms", preset_nmg_escape_water_rooms)
 
-cm_nmg_esc_keyrat:
-	%preset("Key Rat", preset_nmg_esc_keyrat)
+cm_nmg_escape_keyrat:
+	%preset("Key Rat", preset_nmg_escape_keyrat)
 
-cm_nmg_esc_last_two_screens:
-	%preset("Last Two Screens", preset_nmg_esc_last_two_screens)
+cm_nmg_escape_last_two_screens:
+	%preset("Last Two Screens", preset_nmg_escape_last_two_screens)
 
 ; EASTERN
 
@@ -88,64 +88,64 @@ cm_nmg_presets_goto_eastern:
 	%submenu("Eastern", cm_nmg_presets_eastern)
 
 cm_nmg_presets_eastern:
-	dw cm_nmg_east_before_cutscene
-	dw cm_nmg_east_after_cutscene
-	dw cm_nmg_east_octoroc
-	dw cm_nmg_east_outside_palace
-	dw cm_nmg_east_entrance
-	dw cm_nmg_east_stalfos_room
-	dw cm_nmg_east_big_chest_room_1
-	dw cm_nmg_east_dark_key_room
-	dw cm_nmg_east_big_key_dmg_boost
-	dw cm_nmg_east_big_chest_room_2
-	dw cm_nmg_east_gwg
-	dw cm_nmg_east_pot_room
-	dw cm_nmg_east_zeldagamer_room
-	dw cm_nmg_east_armos
+	dw cm_nmg_eastern_before_cutscene
+	dw cm_nmg_eastern_after_cutscene
+	dw cm_nmg_eastern_octoroc
+	dw cm_nmg_eastern_outside_palace
+	dw cm_nmg_eastern_entrance
+	dw cm_nmg_eastern_stalfos_room
+	dw cm_nmg_eastern_big_chest_room_1
+	dw cm_nmg_eastern_dark_key_room
+	dw cm_nmg_eastern_big_key_dmg_boost
+	dw cm_nmg_eastern_big_chest_room_2
+	dw cm_nmg_eastern_gwg
+	dw cm_nmg_eastern_pot_room
+	dw cm_nmg_eastern_zeldagamer_room
+	dw cm_nmg_eastern_armos
 	dw !menu_end
 	%menu_header("EASTERN")
 
-cm_nmg_east_before_cutscene:
-	%preset("Before Cutscene", preset_nmg_east_before_cutscene)
+cm_nmg_eastern_before_cutscene:
+	%preset("Before Cutscene", preset_nmg_eastern_before_cutscene)
 
-cm_nmg_east_after_cutscene:
-	%preset("After Cutscene", preset_nmg_east_after_cutscene)
+cm_nmg_eastern_after_cutscene:
+	%preset("After Cutscene", preset_nmg_eastern_after_cutscene)
 
-cm_nmg_east_octoroc:
-	%preset("Octoroc OW", preset_nmg_east_octoroc)
+cm_nmg_eastern_octoroc:
+	%preset("Octoroc OW", preset_nmg_eastern_octoroc)
 
-cm_nmg_east_outside_palace:
-	%preset("EP Overworld", preset_nmg_east_outside_palace)
+cm_nmg_eastern_outside_palace:
+	%preset("EP Overworld", preset_nmg_eastern_outside_palace)
 
-cm_nmg_east_entrance:
-	%preset("Entrance", preset_nmg_east_entrance)
+cm_nmg_eastern_entrance:
+	%preset("Entrance", preset_nmg_eastern_entrance)
 
-cm_nmg_east_stalfos_room:
-	%preset("Stalfos Room", preset_nmg_east_stalfos_room)
+cm_nmg_eastern_stalfos_room:
+	%preset("Stalfos Room", preset_nmg_eastern_stalfos_room)
 
-cm_nmg_east_big_chest_room_1:
-	%preset("Big Chest Room 1", preset_nmg_east_big_chest_room_1)
+cm_nmg_eastern_big_chest_room_1:
+	%preset("Big Chest Room 1", preset_nmg_eastern_big_chest_room_1)
 
-cm_nmg_east_dark_key_room:
-	%preset("Dark Key Room", preset_nmg_east_dark_key_room)
+cm_nmg_eastern_dark_key_room:
+	%preset("Dark Key Room", preset_nmg_eastern_dark_key_room)
 
-cm_nmg_east_big_key_dmg_boost:
-	%preset("Big Key DMG Boost", preset_nmg_east_big_key_dmg_boost)
+cm_nmg_eastern_big_key_dmg_boost:
+	%preset("Big Key DMG Boost", preset_nmg_eastern_big_key_dmg_boost)
 
-cm_nmg_east_big_chest_room_2:
-	%preset("Big Chest Room 2", preset_nmg_east_big_chest_room_2)
+cm_nmg_eastern_big_chest_room_2:
+	%preset("Big Chest Room 2", preset_nmg_eastern_big_chest_room_2)
 
-cm_nmg_east_gwg:
-	%preset("Gifted With Greenies", preset_nmg_east_gwg)
+cm_nmg_eastern_gwg:
+	%preset("Gifted With Greenies", preset_nmg_eastern_gwg)
 
-cm_nmg_east_pot_room:
-	%preset("Pot Room", preset_nmg_east_pot_room)
+cm_nmg_eastern_pot_room:
+	%preset("Pot Room", preset_nmg_eastern_pot_room)
 
-cm_nmg_east_zeldagamer_room:
-	%preset("Zeldagamer Room", preset_nmg_east_zeldagamer_room)
+cm_nmg_eastern_zeldagamer_room:
+	%preset("Zeldagamer Room", preset_nmg_eastern_zeldagamer_room)
 
-cm_nmg_east_armos:
-	%preset("Armos", preset_nmg_east_armos)
+cm_nmg_eastern_armos:
+	%preset("Armos", preset_nmg_eastern_armos)
 
 ; DESERT
 
@@ -267,10 +267,10 @@ cm_nmg_hera_moldorm:
 
 ; AGAHNIMS TOWER
 
-cm_nmg_presets_goto_atower:
-	%submenu("Agahnim's Tower", cm_nmg_presets_atower)
+cm_nmg_presets_goto_aga:
+	%submenu("Agahnim's Tower", cm_nmg_presets_aga)
 
-cm_nmg_presets_atower:
+cm_nmg_presets_aga:
 	dw cm_nmg_aga_outside_hera
 	dw cm_nmg_aga_first_rupee_tree
 	dw cm_nmg_aga_lost_woods
@@ -486,56 +486,56 @@ cm_nmg_presets_goto_skull:
 	%submenu("Skull Woods", cm_nmg_presets_skull)
 
 cm_nmg_presets_skull:
-	dw cm_nmg_sw_outside_thieves
-	dw cm_nmg_sw_cursed_dwarf
-	dw cm_nmg_sw_getting_tempered
-	dw cm_nmg_sw_fence_dash
-	dw cm_nmg_sw_dash_to_sw
-	dw cm_nmg_sw_mummy_room
-	dw cm_nmg_sw_bomb_jump
-	dw cm_nmg_sw_key_pot
-	dw cm_nmg_sw_skull_entrance
-	dw cm_nmg_sw_mummy_hellway
-	dw cm_nmg_sw_mummy_key
-	dw cm_nmg_sw_mothula
+	dw cm_nmg_skull_outside_thieves
+	dw cm_nmg_skull_cursed_dwarf
+	dw cm_nmg_skull_getting_tempered
+	dw cm_nmg_skull_fence_dash
+	dw cm_nmg_skull_dash_to_sw
+	dw cm_nmg_skull_mummy_room
+	dw cm_nmg_skull_bomb_jump
+	dw cm_nmg_skull_key_pot
+	dw cm_nmg_skull_skull_entrance
+	dw cm_nmg_skull_mummy_hellway
+	dw cm_nmg_skull_mummy_key
+	dw cm_nmg_skull_mothula
 	dw !menu_end
 	%menu_header("SKULL WOODS")
 
-cm_nmg_sw_outside_thieves:
-	%preset("Outside Thieves", preset_nmg_sw_outside_thieves)
+cm_nmg_skull_outside_thieves:
+	%preset("Outside Thieves", preset_nmg_skull_outside_thieves)
 
-cm_nmg_sw_cursed_dwarf:
-	%preset("Cursed Dwarf", preset_nmg_sw_cursed_dwarf)
+cm_nmg_skull_cursed_dwarf:
+	%preset("Cursed Dwarf", preset_nmg_skull_cursed_dwarf)
 
-cm_nmg_sw_getting_tempered:
-	%preset("Getting Tempered", preset_nmg_sw_getting_tempered)
+cm_nmg_skull_getting_tempered:
+	%preset("Getting Tempered", preset_nmg_skull_getting_tempered)
 
-cm_nmg_sw_fence_dash:
-	%preset("Fencedash", preset_nmg_sw_fence_dash)
+cm_nmg_skull_fence_dash:
+	%preset("Fencedash", preset_nmg_skull_fence_dash)
 
-cm_nmg_sw_dash_to_sw:
-	%preset("Dash to Skull Woods", preset_nmg_sw_dash_to_sw)
+cm_nmg_skull_dash_to_sw:
+	%preset("Dash to Skull Woods", preset_nmg_skull_dash_to_sw)
 
-cm_nmg_sw_mummy_room:
-	%preset("Mummy Room", preset_nmg_sw_mummy_room)
+cm_nmg_skull_mummy_room:
+	%preset("Mummy Room", preset_nmg_skull_mummy_room)
 
-cm_nmg_sw_bomb_jump:
-	%preset("Bomb Jump", preset_nmg_sw_bomb_jump)
+cm_nmg_skull_bomb_jump:
+	%preset("Bomb Jump", preset_nmg_skull_bomb_jump)
 
-cm_nmg_sw_key_pot:
-	%preset("Key Pot", preset_nmg_sw_key_pot)
+cm_nmg_skull_key_pot:
+	%preset("Key Pot", preset_nmg_skull_key_pot)
 
-cm_nmg_sw_skull_entrance:
-	%preset("Skull Entrance", preset_nmg_sw_skull_entrance)
+cm_nmg_skull_skull_entrance:
+	%preset("Skull Entrance", preset_nmg_skull_skull_entrance)
 
-cm_nmg_sw_mummy_hellway:
-	%preset("Mummy Hellway", preset_nmg_sw_mummy_hellway)
+cm_nmg_skull_mummy_hellway:
+	%preset("Mummy Hellway", preset_nmg_skull_mummy_hellway)
 
-cm_nmg_sw_mummy_key:
-	%preset("Mummy Key", preset_nmg_sw_mummy_key)
+cm_nmg_skull_mummy_key:
+	%preset("Mummy Key", preset_nmg_skull_mummy_key)
 
-cm_nmg_sw_mothula:
-	%preset("Mothula", preset_nmg_sw_mothula)
+cm_nmg_skull_mothula:
+	%preset("Mothula", preset_nmg_skull_mothula)
 
 ; ICE PALACE
 
@@ -969,13 +969,13 @@ cm_nmg_presets_goto_boss:
 	%submenu("Bosses", cm_nmg_presets_boss)
 
 cm_nmg_presets_boss:
-	dw cm_nmg_east_armos
+	dw cm_nmg_eastern_armos
 	dw cm_nmg_desert_lanmolas
 	dw cm_nmg_hera_moldorm
 	dw cm_nmg_aga_agahnim
 	dw cm_nmg_pod_helma
 	dw cm_nmg_thieves_blind
-	dw cm_nmg_sw_mothula
+	dw cm_nmg_skull_mothula
 	dw cm_nmg_ice_kholdstare
 	dw cm_nmg_swamp_arrghus
 	dw cm_nmg_mire_vitty

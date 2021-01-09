@@ -108,11 +108,19 @@ DrawCurrentRow:
 	BNE .noselect
 
 .select
+	LDA.b SA1IRAM.cm_submodule
+	CMP.w #$0008
+	BEQ .settingjoy
+
 	LDA.w #!SELECTED
 	BRA .setcol
 
 .header
 	LDA.w #!HEADER
+	BRA .setcol
+
+.settingjoy
+	LDA.w #!SHORTCUTTING
 	BRA .setcol
 
 .noselect
@@ -771,7 +779,8 @@ CMDRAW_PRGTEXT:
 
 ; All of these just empty the rest of the row
 CMDRAW_HEADER:
-CMDRAW_PRESET:
+CMDRAW_PRESET_UW:
+CMDRAW_PRESET_OW:
 CMDRAW_SUBMENU:
 CMDRAW_SUBMENU_VARIABLE:
 CMDRAW_FUNC:

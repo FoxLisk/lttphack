@@ -42,13 +42,19 @@ struct SA1IRAM $003000
 
 	.cm_writer_args: skip 4
 
-	.preset_addr: skip 4
-	.preset_prog: skip 4
-	.preset_reader: skip 4
-	.preset_reader2: skip 4
-	.preset_writer: skip 4
+	.preset_addr: skip 3
+
+	.preset_prog: skip 3
+	.preset_prog_end: skip 2
+
+	.preset_pert: skip 3
+	.preset_pert_end: skip 2
+
+	.preset_reader: skip 3
+	.preset_reader2: skip 3
+	.preset_writer: skip 2
 	.preset_type: skip 2
-	.preset_scratch: skip 8
+	.preset_scratch: skip 4
 
 
 

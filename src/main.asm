@@ -40,7 +40,7 @@ incsrc cm_mainmenu_hud.asm
 incsrc cm_mainmenu_config.asm
 
 org $268000
-incsrc presets.asm
+incsrc presets2.asm
 
 org $288000
 incsrc music.asm
@@ -51,8 +51,8 @@ org $298000
 ; ---- data ----
 
 org $308000
-incsrc preset_data_nmg.asm
-
+incsrc preset_data_test.asm
+print "Size: ", pc
 org $318000
 incsrc preset_data_hundo.asm
 

@@ -114,41 +114,29 @@ pushpc
 %MenuAction("HEADER", 0, $2F)
 
 ;-------------------------------------------------------------------------------
+; leave UW after header, so it can go right to preset type
 %MenuAction("PRESET_UW", 3, $6E)
-macro preset_uw(name)
-	%add_self()
-	db !CM_PRESET_UW
-	dl ?here
-	db "<name>", $FF
-
-#?here:
+macro preset_UW(name, category, segment, scene)
+	%preset("UW", <name>, <category>, <segment>, <scene>)
 endmacro
-
-macro preset_uw_copy(name, addr)
-	%add_self()
-	db !CM_PRESET_UW
-	dl <addr>
-	db "<name>", $FF
-endmacro
-
 
 %MenuAction("PRESET_OW", 3, $6E)
-macro preset_ow(name)
-	%add_self()
-	db !CM_PRESET_OW
-	dl ?here
-	db "<name>", $FF
-
-#?here:
+macro preset_OW(name, category, segment, scene)
+	%preset("OW", <name>, <category>, <segment>, <scene>)
 endmacro
 
-macro preset_ow_copy(name, addr)
+macro preset(type, name, category, segment, scene)
+#presetmenu_<category>_<segment>_<scene>:
 	%add_self()
-	db !CM_PRESET_OW
-	dl <addr>
+	db !CM_PRESET_<type>
+	dw presetdata_<category>_<segment>_<scene>
 	db "<name>", $FF
-endmacro
 
+#presetdata_<category>_<segment>_<scene>:
+	dw presetpersistent_<category>_<segment>
+	dw presetpersistent_<category>_<segment>_<scene>
+	dw presetSRAM_<category>_<segment>_<scene>
+endmacro
 ;-------------------------------------------------------------------------------
 %MenuAction("TOGGLE", 3, $6B)
 macro toggle(name, addr)

@@ -1,9 +1,17 @@
 GAMEPLAY_SUBMENU:
-%menu_header("GAMEPLAY", 10)
+%menu_header("GAMEPLAY", 11)
 
 ;===============================================================================
 %toggle("Skip Triforce", !ram_skip_triforce_toggle)
-%toggle("Sanc heart", !ram_sanctuary_heart)
+%toggle("Sanc heart", !ram_nmg_sanctuary_heart)
+
+;===============================================================================
+%choice_here("Powder", !ram_nmg_powder, 3)
+	%list_item("No")
+	%list_item("Mushroom")
+	%list_item("Powder")
+
+;===============================================================================
 %toggle("Disable beams", !disable_beams)
 
 ;===============================================================================

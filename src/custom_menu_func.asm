@@ -348,6 +348,7 @@ CMDO_SUBMENU:
 	LDA.b [SA1IRAM.cm_current_selection], Y
 	STA.b SA1IRAM.cm_cursor+2
 
+.drawmenu
 	JSR DrawCurrentMenu
 	JSL NMI_RequestFullMenuUpdate
 
@@ -356,14 +357,81 @@ CMDO_SUBMENU:
 .no
 	RTS
 
-CMDO_PRESET:
-CMDO_SUBMENU_VARIABLE:
+
+#CMDO_SUBMENU_VARIABLE:
+	BIT.b SA1IRAM.cm_ax
+	BPL .no
+
+	JSR EmptyCurrentMenu
+	JSR CM_PushMenuToStack
+
+	JSL CM_MenuSFX_submenu
+
+	JSR CMDO_PERFORM_FUNC
+	BRA .drawmenu
+
+
+
+CMDO_PRESET_UW:
+CMDO_PRESET_OW:
+	JSR CMDO_SAVE_ADDRESS_LONG
+
+	REP #$20
+	TXA
+	STX.b SA1IRAM.preset_type
+
+	LDA.b SA1IRAM.cm_writer+0
+	STA.b SA1IRAM.preset_addr+0
+
+	LDA.b SA1IRAM.cm_writer+2
+	STA.b SA1IRAM.preset_addr+2
+
+
+
+	LDA.w #2
+	STA.b SA1IRAM.cm_submodule
+
+	SEP #$30
+	LDA.b #$80
+	STA.w $2100
+
+	JSL load_default_tileset
+	JSL CleanVRAMSW
+	JML preset_load
+
+CMDO_CTRL_SHORTCUT_FINAL:
+	LDA.b SA1IRAM.cm_ax
+	BIT.b #$C0
+	BEQ .no
+
+	JSL CM_MenuSFX_error
+.no
+	RTS
 
 CMDO_CTRL_SHORTCUT:
-CMDO_CTRL_SHORTCUT_FINAL:
+	JSR CMDO_SAVE_ADDRESS_LONG
+
+	LDA.b #$C0
+	BIT.b SA1IRAM.cm_ax
+	BEQ .no
+
+	REP #$20
+	LDA.w #$0000
+	STA.b [SA1IRAM.cm_writer]
+	BVS .delete
+
+	LDA.w #$0008
+	STA.b SA1IRAM.cm_submodule
+	JSL CM_MenuSFX_setshortcut
+	RTS
+
+.delete
+	JSL CM_MenuSFX_empty
+
+.no
+	RTS
 
 
-RTS
 
 ;===============================================================================
 CMDO_NUMFIELD:
@@ -471,13 +539,3 @@ CMDO_NUMFIELD_HEX:
 	CMP.b [SA1IRAM.cm_current_selection], Y
 	BCS .get_max_max ; will cap if we match, but that's fine
 	BRA .in_range_max
-
-
-
-
-
-
-
-
-
-

@@ -239,7 +239,8 @@ endmacro
 %def_perm_sram("fast_moving_walls", !OFF)
 %def_perm_sram("probe_toggle", !OFF)
 
-%def_perm_sram("sanctuary_heart",!OFF)
+%def_perm_sram("nmg_sanctuary_heart",!OFF)
+%def_perm_sram("nmg_powder",!OFF)
 %def_perm_sram("rerandomize_toggle", !ON)
 %def_perm_sram("skip_triforce_toggle", !OFF)
 %def_perm_sram("bonk_items_toggle", !OFF)
