@@ -42,16 +42,15 @@ struct SA1RAM $406000
 	.SW_BUFFER_r4: skip 64
 	.SW_BUFFER_r5: skip 64
 
-	.last_frame_did_saveload: skip 2
-
 	; stuff for various RAM
-	.clearable_sa1ram:
+
 
 	.hex2dec_tmp: skip 2
 	.hex2dec_first_digit: skip 2
 	.hex2dec_second_digit: skip 2
 	.hex2dec_third_digit: skip 2
 
+.clearable_sa1ram:
 	.rng_counter: skip 2
 	.rng_cache: skip 1
 	.frame_cache: skip 1
@@ -75,32 +74,21 @@ struct SA1RAM $406000
 	.mash_counter: skip 2
 	.mash_inputs: skip 2
 
-	.preset_type: skip 2
-	.preset_destination: skip 2
-	.previous_preset_type: skip 2
-	.previous_preset_destination: skip 2
 	.preset_end_of_sram_state: skip 2
 	.preset_spotlight_timer: skip 2
-
-	.ctrl_last_input: skip 2
 
 	.CM_SubMenuIndex: skip 2
 	.CM_SubMenuStack: skip 40
 
+	.disabled_layers: skip 2
 .end_of_clearable_sa1ram:
 
-	.last_frame_input: skip 2
 	.cm_input_timer: skip 2
 	.cm_last_input: skip 2
-	.opened_menu_manually: skip 2
+	.LayerCache: skip 2
 
 	.cm_item_bow: skip 1
-	.cm_item_bottle: skip 1
-	.cm_item_mirror: skip 1
 	.cm_equipment_maxhp: skip 1
-	.cm_old_crystal_switch: skip 2
-	.cm_crystal_switch: skip 2
-	.cm_gamestate_world: skip 2
 
 	.movie_hud: skip $40
 
@@ -122,29 +110,11 @@ endmacro
 ; Magic words
 SA1SRAM = $400000
 
-
-
-!menu_end = #$0000
-!list_end = #$FF
-
 !EMPTY = $207F
 !QMARK = $212A
 !BLANK_TILE = $24F5
 
-!POS_MEM_INPUT_DISPLAY_TOP #= $6000+$028
-!POS_MEM_INPUT_DISPLAY_BOT #= !POS_MEM_INPUT_DISPLAY_TOP+$40
-
-
 ; special stuff
-!offsetS = $403000
-!offsetincS = 0
-
-macro def_SA1_control(name, size)
-	!SAC_<name> #= !offsetS+!offsetincS
-	!offsetincS #= !offsetincS+<size>
-endmacro
-
-%def_SA1_control("stating", 1)
 
 function color(h) = ((((h&$FF)/8)<<10)|(((h>>8&$FF)/8)<<5)|(((h>>16&$FF)/8)<<0))
 
@@ -152,19 +122,13 @@ function color(h) = ((((h&$FF)/8)<<10)|(((h>>8&$FF)/8)<<5)|(((h>>16&$FF)/8)<<0))
 ;
 ; 7C[0x08] (84)
 ; 8E[0x02] (90)
-; AB[0x02]
 ; B6[0x01]
 ; 7A[0x01]
 ; 7C[0x02]
 ; 04CB[0x25] (04F0)
-; $7F7667[0x6719] (7FDD80)
-; $7EC900[0x1F00] (7EE800)
-;  * 7ED000 - 7ED780 = VRAM buffer backup in custom_menu.asm
 
 ; old stuff
 !ram_extra_sa1_required = $6F
-
-; Account for different SRAM layouts
 
 !offset = $407000
 !offsetinc = 0
@@ -213,6 +177,7 @@ endmacro
 %def_perm_sram("ctrl_disable_sprites", !OFF)
 %def_perm_sram("ctrl_reset_segment_timer", !OFF)
 
+%def_perm_sram("ctrl_toggle_switch", !OFF)
 %def_perm_sram("ctrl_fill_everything", !OFF)
 %def_perm_sram("ctrl_fix_vram", !OFF)
 %def_perm_sram("ctrl_somaria_pits", !OFF)
@@ -311,45 +276,9 @@ endmacro
 !ram_linkOAMpos = $7C
 
 ;-------------------------
-; Layers
-;-------------------------
-!disabled_layers = $B6
-
-;-------------------------
 ; Sword beams
 ;-------------------------
 !disable_beams = $7A
-
-!CM_Subsub = $B1
-
-;-------------------------
-; Custom menu
-;-------------------------
-
-!CM_ACTION_TOGGLE = #$00
-!CM_ACTION_JSR = #$02
-!CM_ACTION_SUBMENU = #$04
-!CM_ACTION_BACK = #$06
-!CM_ACTION_CHOICE = #$08
-!CM_ACTION_TOGGLE_JSR = #$0A
-!CM_ACTION_CHOICE_JSR = #$0C
-!CM_ACTION_NUMFIELD = #$0E
-!CM_ACTION_PRESET = #$10
-!CM_ACTION_TOGGLE_BIT = #$12
-!CM_ACTION_CTRL_SHORTCUT = #$14
-!CM_ACTION_SUBMENU_VARIABLE = #$16
-!CM_ACTION_MOVIE = #$18
-!CM_ACTION_TOGGLE_BIT_TEXT = #$1A
-!CM_ACTION_CTRL_SHORTCUT_FINAL = #$1C
-
-
-;-------------------------
-; PRESETS
-;-------------------------
-!PRESET_OVERWORLD = #$01
-!PRESET_DUNGEON = #$02
-
-
 
 ;-------------------------
 ; MOVIE
@@ -451,8 +380,6 @@ LoadGearPalettes_bunny = $02FD8A
 ; OTHER
 
 !ram_gamestate_world = $7EF3CA
-
-!ram_cm_crystal_switch = $7EF384
 
 !ram_game_big_keys_1 = $7EF366
 !ram_game_big_keys_2 = $7EF367

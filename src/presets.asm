@@ -495,6 +495,7 @@ preset_clear_for_initial_preset:
 	INX #2 : CPX #$0010 : BNE -
 
 	LDX #$0000
+
 -	STZ $029E, X
 	INX #2 : CPX #$000A : BNE -
 

@@ -24,23 +24,23 @@ org $00841E
 	; improved to: 2 scanlines + 28H
 
 	; first half
-	LDX #$8001 : STX $4300
+	LDX.w #$8001 : STX.w $4300
 
-	LDA.b #OAM_Cleaner>>16 : STA $4304
+	LDA.b #OAM_Cleaner>>16 : STA.w $4304
 	TXA ; give A 0x01
 
-	LDX #$0801 : STX $2181 : STZ $2183
+	LDX.w #$0801 : STX.w $2181 : STZ.w $2183
 
-	LDX.w #OAM_Cleaner : STX $4302
-	LDX #$0080 : STX $4305
-	STA $420B
+	LDX.w #OAM_Cleaner : STX.w $4302
+	LDX.w #$0080 : STX.w $4305
+	STA.w $420B
 
 	; second half
-	LDX.w #OAM_Cleaner : STX $4302
-	LDX #$0901 : STX $2181
-	LDX #$0080 : STX $4305
+	LDX.w #OAM_Cleaner : STX.w $4302
+	LDX.w #$0901 : STX.w $2181
+	LDX.w #$0080 : STX.w $4305
 
-	STA $420B
+	STA.w $420B
 
 	PLX
 	STX.w $4300
@@ -61,7 +61,7 @@ org $083D1
 	STA.w SA1IRAM.JOYPAD2_NEW
 
 	LDA.w $4218
-	STA.b $00
+	STA.b $00 ; not really necessary, but good for expected glitching
 
 	SEP #$20
 	STA.b $F2
@@ -97,8 +97,8 @@ org $0080D5
 	JSL nmi_expand
 
 org $008174
-	LDA.b $1C : STA.w $00AB ; 16-bit addressing to save 1 cycle by avoiding a NOP
-	LDA.b $1D : STA.w $00AC
+	LDA.b $1C : STA.w SA1RAM.LayerCache+0 ; 16-bit addressing to save 1 cycle by avoiding a NOP
+	LDA.b $1D : STA.w SA1RAM.LayerCache+1
 
 ;org $0081A0 ; save camera correction for NMI expansion
 ;	BRA + ; save time during NMI
@@ -129,11 +129,13 @@ nmi_expand:
 	PHA ; A is 0 from right before the hook
 	PLB ; and that happens to be the bank we want
 
-	STA.w SA1RAM.last_frame_did_saveload ; while A is 0
+	LDA.w SA1RAM.disabled_layers
+	XBA
+	LDA.w SA1RAM.disabled_layers
 
-	LDA !disabled_layers : TRB $AB : TRB $AC
 	REP #$20
-	LDA $AB : STA $212C
+	TRB.w SA1RAM.LayerCache
+	LDA.w SA1RAM.LayerCache : STA $212C
 
 	SEP #$30
 	LDA.b $12 : STA.w SA1IRAM.CopyOf_12
@@ -510,6 +512,9 @@ SNES_CUSTOM_NMI:
 
 	db 22 : dw !ram_hud_sel_fg
 	db 23 : dw !ram_hud_sel_bg
+
+	db 30 : dw !ram_hud_sel_bg
+	db 31 : dw !ram_hud_sel_fg
 
 	db 26 : dw !ram_hud_dis_fg
 	db 27 : dw !ram_hud_bg

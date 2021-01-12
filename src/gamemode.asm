@@ -40,7 +40,7 @@ gamemode_load_previous_preset:
 	; Loading during text mode makes the text stay or the item menu bug
 	LDA $10 : CMP #$0E : BEQ .no_load_preset
 	REP #$20
-	LDA.w SA1RAM.previous_preset_destination
+	LDA.w SA1IRAM.preset_addr
 	SEP #$20
 	BEQ .no_load_preset
 
@@ -276,7 +276,6 @@ savestate_end:
 
 .songBankNotChanged
 	SEP #$31
-	LDA.b #$01 : STA.w SA1RAM.last_frame_did_saveload
 
 	; i hope this works
 	; now we just reset to the main game loop
@@ -299,11 +298,27 @@ savestate_end:
 
 gamemode_oob:
 	SEP #$20
-	LDA.w !lowram_oob_toggle
+	LDA.w $037F
 	AND.b #$01 ; just in case
 	EOR.b #$01
-	STA.w !lowram_oob_toggle
+	STA.w $037F
 	RTL
+
+gamemode_toggle_switch:
+	REP #$20
+	LDA.b $10
+	CMP.w #$0007
+	SEP #$20
+	BNE .notsafe
+
+	LDA.l $7EC172 : EOR #$01 : STA.l $7EC172
+	LDA.b #$16 : STA.b $11
+	LDA.b #$25 : STA.w $012F
+
+
+.notsafe
+	RTL
+
 
 gamemode_skip_text:
 	SEP #$20
@@ -460,8 +475,7 @@ gamemode_reset_segment_timer:
 	RTL
 
 gamemode_fix_vram:
-	REP #$20
-	REP #$10
+	REP #$30
 	LDA #$0280 : STA $2100
 	LDA #$0313 : STA $2107
 	LDA #$0063 : STA $2109 ; zeros out unused bg4

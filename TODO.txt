@@ -1,23 +1,11 @@
 Big stuff
 ----------
 
-- $0219 might help reduce lag for some options?
-
-- full 4 nibble coordinates option
-
 - Z coordinate option?
 
 - Add options for what to show with ancilla watch?
 
-- Remove duck from preset things
-
-- Clear BG3 thing for last resort fix
-
 - Music always mutes
-
-- fill everything in menu
-
-- need to trigger updates more to let things works (like after transitions)
 
 - Movies
 
@@ -25,19 +13,13 @@ Big stuff
 
 - Counters (spec below)
 
-- Rewrite sd2snes save/load state code
-
 - Mashing & Pumping mini-game
 
 - Rewrite presets
 
-- IRQ causes lag when preset loaded from crystal cutscene (should be an easy fix)
-
 - "if you start a preset from first SW preset and play out the whole dungeon, you sometimes end up with a small key [before] bomb jump"
 
 - ad khold preset is hard to move around in
-
-- input display on text??
 
 Other stuff
 ------------
@@ -45,8 +27,6 @@ Other stuff
 - preset randomizer
 
 - multiple rng support?
-
-- cm_clear_buffer -> wram dma
 
 - deadrock rng control?
 
@@ -66,22 +46,10 @@ Other stuff
 
 - Active movement speed counter. Like the above kinda but shows real time how fast you're going. Would help for things like understanding swim speeds or hidden bastard/rail type deals.
 
-- A way to change/preset your antennae value for spoopy inputs presently lengthy. To easily engage in mirerod entanglements.
-
-- powder/mushroom setting like sanc heart
-
-- loading presets after sq shows wrong menu item
-
 - YBA lua like shortcut for collision mapping
-
-Possible toggles/options
--------------------------
-- Follower $7EF3CC
 
 Low priority
 -------------
-- Make the menu redraw less often, just for practicality's sake and less disruptive fblank
-
 - TT palette transparency problems: JSL.l $02FD68 sets to not transparent, find similar routine; it's in bank0E in US though
 
 ======== MINIGAMES TODO ========

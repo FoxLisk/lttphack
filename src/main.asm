@@ -15,29 +15,34 @@ incsrc timers.asm
 incsrc hudextras.asm
 incsrc hudextras_uw.asm
 incsrc hudextras_ancilla.asm
-
-org $228000
-incsrc tiles.asm
-
-org $238000
 incsrc rng.asm
 incsrc misc.asm
+
+org $218000
+incsrc tiles.asm
+
+org $228000
 incsrc init.asm
 
-org $248000
-table ../resources/normal.tbl
-incsrc cm_mainmenu2.asm
-incsrc custom_menu2.asm
-incsrc custom_menu_draw.asm
-incsrc custom_menu_func.asm
-incsrc cm_mainmenu_items.asm
-incsrc cm_mainmenu_equipment.asm
-incsrc cm_mainmenu_gamestate.asm
-incsrc cm_mainmenu_linkstate.asm
-incsrc cm_mainmenu_gameplay.asm
-incsrc cm_mainmenu_rng.asm
-incsrc cm_mainmenu_hud.asm
-incsrc cm_mainmenu_config.asm
+org $238000
+CM:
+table resources/menu.tbl
+incsrc cm_macros.asm
+incsrc cm_main.asm
+incsrc cm_draw.asm
+incsrc cm_func.asm
+incsrc cm_items.asm
+incsrc cm_equipment.asm
+incsrc cm_gamestate.asm
+incsrc cm_linkstate.asm
+incsrc cm_gameplay.asm
+incsrc cm_rng.asm
+incsrc cm_hud.asm
+incsrc cm_controls.asm
+incsrc cm_config.asm
+
+CM_END:
+print "Custom menu size: $", hex(CM_END-CM)
 
 org $268000
 incsrc presets2.asm
@@ -51,23 +56,21 @@ org $298000
 ; ---- data ----
 
 org $308000
-incsrc preset_data_test.asm
-print "Size: ", pc
+incsrc cm_presets_nmg.asm
+incsrc cm_presets_anyrmg.asm
+
 org $318000
-incsrc preset_data_hundo.asm
+incsrc cm_presets_hundo.asm
 
 org $328000
-incsrc preset_data_lowleg.asm
+incsrc cm_presets_lowleg.asm
 
 org $338000
-incsrc preset_data_ad.asm
+incsrc cm_presets_adold.asm
+incsrc cm_presets_ad2020.asm
 
 org $348000
-incsrc preset_data_anyrmg.asm
-incsrc preset_data_ad2020.asm
-
-org $358000
-incsrc preset_data_lownmg.asm
+incsrc cm_presets_lownmg.asm
 
 ; pad rom to 2mb
 org $3FFFFF

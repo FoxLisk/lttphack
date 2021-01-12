@@ -119,7 +119,7 @@ dl .here
 ;===============================================================================
 global_preset_esc_entrance:
 %preset_ow("Entrance")
-%preset("nmg_esc_entrance")
+%preset("Nmg_esc_entrance")
 dw $001B ; Screen Index
 dw $07F9 ; Link X
 dw $0709 ; Link Y

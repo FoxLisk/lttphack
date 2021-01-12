@@ -56,19 +56,19 @@ CustomCharsDone:
 	RTL
 
 hud_table:
-	incbin ../resources/hud_gfx1.2bpp
-	incbin ../resources/hud_gfx2.2bpp
-	incbin ../resources/hud_gfx3.2bpp
+	incbin resources/hud_gfx1.2bpp
+	incbin resources/hud_gfx2.2bpp
+	incbin resources/hud_gfx3.2bpp
 
 hud_font:
-	incbin ../resources/hud_font1.2bpp
-	incbin ../resources/hud_font2.2bpp
-	incbin ../resources/hud_font3.2bpp
+	incbin resources/hud_font1.2bpp
+	incbin resources/hud_font2.2bpp
+	incbin resources/hud_font3.2bpp
 
 cm_gfx:
-	incbin ../resources/menu_font1.2bpp
-	incbin ../resources/menu_font2.2bpp
-	incbin ../resources/menu_font3.2bpp
+	incbin resources/menu_font1.2bpp
+	incbin resources/menu_font2.2bpp
+	incbin resources/menu_font3.2bpp
 
 hud_inputchars:
-	incbin ../resources/inputchars.2bpp
+	incbin resources/inputchars.2bpp

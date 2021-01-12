@@ -20,11 +20,11 @@ org $00FFD7 : db 11 ; 2mb ROM
 org $00FFD8 : db 8 ; 256k SRAM
 
 pushtable
-table ../resources/fileselecttop.tbl
+table resources/fileselecttop.tbl
 	org $0CDDF0 : fillword $0188 : fill 52
 	org $0CDDF0 : dw "PRACTICE HACK !VERSIONTEXT"
 
-table ../resources/fileselectbot.tbl
+table resources/fileselectbot.tbl
 	org $0CDE2C : fillword $0188 : fill 52
 	org $0CDE2C : dw "PRACTICE HACK !VERSIONTEXT"
 pulltable

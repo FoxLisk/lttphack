@@ -151,7 +151,6 @@ init_hook:
 	JSL $028000
 	JSL $028022
 	JSL $0EF572
-	;JSL DoTextChars
 	JSL DoWRAM4BPP
 
 	SEP #$30
@@ -167,35 +166,35 @@ init_hook:
 
 	JML init_done
 
-DoTextChars:
-	SEP #$20
-	LDA.b #$80
-	STA.w $2100
-
-	REP #$20
-	LDA.w #$2000
-	STA.w $4305
-
-	LDA.w #TEXTGFX
-	STA.w $4302
-
-	LDA.w #$E000>>1
-	STA.w $2116
-
-	LDA.w #$1801
-	STA.w $4300
-
-	SEP #$30
-	LDA.b #$80
-	STA.w $2115
-
-	LDA.b #MessagePointers>>16
-	STA.w $4304
-
-	LDA.b #$01
-	STA.w $420B
-
-	RTL
+;DoTextChars:
+;	SEP #$20
+;	LDA.b #$80
+;	STA.w $2100
+;
+;	REP #$20
+;	LDA.w #$2000
+;	STA.w $4305
+;
+;	LDA.w #TEXTGFX
+;	STA.w $4302
+;
+;	LDA.w #$E000>>1
+;	STA.w $2116
+;
+;	LDA.w #$1801
+;	STA.w $4300
+;
+;	SEP #$30
+;	LDA.b #$80
+;	STA.w $2115
+;
+;	LDA.b #MessagePointers>>16
+;	STA.w $4304
+;
+;	LDA.b #$01
+;	STA.w $420B
+;
+;	RTL
 
 ;===============================================================================
 
@@ -239,10 +238,7 @@ VERSIONUNSTABLE:
 	dw $0000, $0000
 
 WRAMGFX:
-incbin "../resources/decomped.4bpp"
-
-TEXTGFX:
-incbin "../resources/decompedtext.2bpp"
+incbin "resources/decomped.4bpp"
 
 MessagePointers:
 	dw $8000, $8001, $800E, $801B, $803C, $805C, $806D, $8078

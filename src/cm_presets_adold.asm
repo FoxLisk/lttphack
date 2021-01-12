@@ -6,7 +6,7 @@ presetheader_adold:
 	dw presetSRAM_adold ; location of SRAM
 
 ;===============================================================================
-%menu_header("All dungeons RMG (old route)", 15)
+%menu_header("All Dungeons RMG (old)", 15)
 	%submenu("Hyrule Castle", presetmenu_adold_escape)
 	%submenu("Eastern Palace", presetmenu_adold_eastern)
 	%submenu("Palace of Darkness", presetmenu_adold_pod)
@@ -41,7 +41,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $03 ; Main GFX
 db $FF ; Music
 db $00 ; Floor
@@ -63,7 +63,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $01 ; Main GFX
 db $03 ; Music
 db $FF ; Floor
@@ -123,7 +123,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $C0 ; Room layout
+db $C2 ; Room layout
 db $04 ; Main GFX
 db $10 ; Music
 db $FF ; Floor
@@ -145,7 +145,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $04 ; Main GFX
 db $10 ; Music
 db $FF ; Floor
@@ -211,7 +211,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $04 ; Main GFX
 db $10 ; Music
 db $FF ; Floor
@@ -299,7 +299,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $04 ; Main GFX
 db $10 ; Music
 db $FF ; Floor
@@ -351,7 +351,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $04 ; Main GFX
 db $10 ; Music
 db $00 ; Floor
@@ -373,7 +373,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $03 ; Main GFX
 db $07 ; Music
 db $00 ; Floor
@@ -411,7 +411,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $05 ; Main GFX
 db $11 ; Music
 db $00 ; Floor
@@ -433,7 +433,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $41 ; Room layout
+db $43 ; Room layout
 db $05 ; Main GFX
 db $11 ; Music
 db $00 ; Floor
@@ -565,7 +565,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $05 ; Main GFX
 db $11 ; Music
 db $00 ; Floor
@@ -587,7 +587,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $05 ; Main GFX
 db $11 ; Music
 db $01 ; Floor
@@ -693,7 +693,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $C1 ; Room layout
+db $C3 ; Room layout
 db $06 ; Main GFX
 db $12 ; Music
 db $00 ; Floor
@@ -747,7 +747,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $07 ; Main GFX
 db $16 ; Music
 db $00 ; Floor
@@ -879,7 +879,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $07 ; Main GFX
 db $16 ; Music
 db $00 ; Floor
@@ -991,7 +991,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $40 ; Room layout
+db $42 ; Room layout
 db $14 ; Main GFX
 db $12 ; Music
 db $00 ; Floor
@@ -1013,7 +1013,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $C0 ; Room layout
+db $C2 ; Room layout
 db $05 ; Main GFX
 db $11 ; Music
 db $01 ; Floor
@@ -1079,7 +1079,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $C1 ; Room layout
+db $C3 ; Room layout
 db $05 ; Main GFX
 db $11 ; Music
 db $01 ; Floor
@@ -1185,7 +1185,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $C0 ; Room layout
+db $C2 ; Room layout
 db $0A ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -1207,7 +1207,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $C1 ; Room layout
+db $C3 ; Room layout
 db $0A ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -1251,7 +1251,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $0A ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -1273,7 +1273,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $0A ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -1295,7 +1295,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $0A ; Main GFX
 db $16 ; Music
 db $00 ; Floor
@@ -1317,7 +1317,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $0A ; Main GFX
 db $16 ; Music
 db $00 ; Floor
@@ -1361,7 +1361,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $0A ; Main GFX
 db $16 ; Music
 db $FE ; Floor
@@ -1383,7 +1383,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $0A ; Main GFX
 db $16 ; Music
 db $FE ; Floor
@@ -1569,7 +1569,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $41 ; Room layout
+db $43 ; Room layout
 db $09 ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -1607,7 +1607,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $09 ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -1651,7 +1651,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $09 ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -1745,7 +1745,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $03 ; Main GFX
 db $07 ; Music
 db $00 ; Floor
@@ -1799,7 +1799,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $12 ; Main GFX
 db $11 ; Music
 db $FF ; Floor
@@ -1821,7 +1821,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $12 ; Main GFX
 db $11 ; Music
 db $FF ; Floor
@@ -1865,7 +1865,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $12 ; Main GFX
 db $11 ; Music
 db $FF ; Floor
@@ -1887,7 +1887,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $12 ; Main GFX
 db $11 ; Music
 db $01 ; Floor
@@ -1971,7 +1971,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $81 ; Room layout
+db $83 ; Room layout
 db $0C ; Main GFX
 db $16 ; Music
 db $00 ; Floor
@@ -2015,7 +2015,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $0C ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -2037,7 +2037,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $0C ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -2059,7 +2059,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $C0 ; Room layout
+db $C2 ; Room layout
 db $0C ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -2081,7 +2081,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $0C ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -2191,7 +2191,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $81 ; Room layout
+db $83 ; Room layout
 db $0C ; Main GFX
 db $16 ; Music
 db $00 ; Floor
@@ -2213,7 +2213,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $40 ; Room layout
+db $42 ; Room layout
 db $0C ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -2279,7 +2279,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $41 ; Room layout
+db $43 ; Room layout
 db $0C ; Main GFX
 db $16 ; Music
 db $FE ; Floor
@@ -2347,7 +2347,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $08 ; Main GFX
 db $18 ; Music
 db $00 ; Floor
@@ -2407,7 +2407,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $08 ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -2451,7 +2451,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $81 ; Room layout
+db $83 ; Room layout
 db $08 ; Main GFX
 db $16 ; Music
 db $FE ; Floor
@@ -2541,7 +2541,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $0B ; Main GFX
 db $16 ; Music
 db $00 ; Floor
@@ -2585,7 +2585,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $80 ; Room layout
+db $82 ; Room layout
 db $0B ; Main GFX
 db $16 ; Music
 db $FF ; Floor
@@ -2629,7 +2629,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $0B ; Main GFX
 db $16 ; Music
 db $FE ; Floor
@@ -2651,7 +2651,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $0B ; Main GFX
 db $16 ; Music
 db $FC ; Floor
@@ -2719,7 +2719,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $40 ; Room layout
+db $42 ; Room layout
 db $14 ; Main GFX
 db $12 ; Music
 db $00 ; Floor
@@ -2817,7 +2817,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $40 ; Room layout
+db $42 ; Room layout
 db $0D ; Main GFX
 db $16 ; Music
 db $FE ; Floor
@@ -2839,7 +2839,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $40 ; Room layout
+db $42 ; Room layout
 db $0D ; Main GFX
 db $16 ; Music
 db $FE ; Floor
@@ -2907,7 +2907,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $40 ; Room layout
+db $42 ; Room layout
 db $14 ; Main GFX
 db $12 ; Music
 db $00 ; Floor
@@ -2929,7 +2929,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $C0 ; Room layout
+db $C2 ; Room layout
 db $0E ; Main GFX
 db $16 ; Music
 db $01 ; Floor
@@ -3105,7 +3105,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $0E ; Main GFX
 db $16 ; Music
 db $03 ; Floor
@@ -3149,7 +3149,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $81 ; Room layout
+db $83 ; Room layout
 db $0E ; Main GFX
 db $16 ; Music
 db $04 ; Floor
@@ -3193,7 +3193,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $0E ; Main GFX
 db $16 ; Music
 db $04 ; Floor
@@ -3215,7 +3215,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $0E ; Main GFX
 db $16 ; Music
 db $05 ; Floor
@@ -3259,7 +3259,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $0E ; Main GFX
 db $16 ; Music
 db $05 ; Floor
@@ -3327,7 +3327,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $00 ; Room layout
+db $02 ; Room layout
 db $04 ; Main GFX
 db $10 ; Music
 db $01 ; Floor
@@ -3371,7 +3371,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $04 ; Main GFX
 db $10 ; Music
 db $03 ; Floor
@@ -3437,7 +3437,7 @@ db $00 ; Item
 db $00 ; Link direction
 ;-----------------------------
 db $00 ; Entrance
-db $01 ; Room layout
+db $03 ; Room layout
 db $04 ; Main GFX
 db $10 ; Music
 db $05 ; Floor

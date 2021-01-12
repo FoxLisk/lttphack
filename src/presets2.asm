@@ -1,20 +1,26 @@
-; TODO add preset header
-; replace ~ with ' for comments
 pushpc
 org $02FFC7
-LoadEntrance_long:
+PresetLoadArea_UW:
 	SEP #$30
-	JSR DungeonLoadEntrance ; does PHK itself
+	LDA.b #$00
+	PHA
+	PLB
+	JSR.w $02D854
+	JMP.w $028157
+	;JSR Dungeon_LoadEntrance ; does PHK itself
+	;RTL
+
+PresetLoadArea_OW:
+	PHK
+	PLB
+	JSR.w $02E2EF
+	JSL $09C4A1 ; skip some extra resetting we already did
+	STZ.b $6C
+	JSR.w $028A0E
 	RTL
 
-
-
-
-
-
-
 pullpc
-PRESET_MENU:
+PRESET_SUBMENU:
 	SEP #$30
 	LDA.w !ram_preset_category
 	ASL
@@ -22,7 +28,7 @@ PRESET_MENU:
 	ADC.w !ram_preset_category
 	TAX
 
-	REP #$20
+	REP #$21
 	LDA.l .pointers-1, X
 	AND.w #$FF00
 	STA.b SA1IRAM.cm_cursor+0
@@ -42,19 +48,18 @@ PRESET_MENU:
 
 	; adjust the pointer to be in the correct spot for the menu
 	LDA.b SA1IRAM.cm_current_menu
-	CLC
 	ADC.w #$0002
 	STA.b SA1IRAM.cm_current_menu
 	RTL
 
 .pointers
-	dl preset_header_nmg
-	dl preset_header_hundo
-	dl preset_header_lownmg
-	dl preset_header_low
-	dl preset_header_ad2020
-	dl preset_header_ad
-	dl preset_header_anyrmg
+	dl presetheader_nmg
+	;dl presetheader_hundo
+	;dl presetheader_lownmg
+	;dl presetheader_low
+	;dl presetheader_ad2020
+	;dl presetheader_ad
+	;dl presetheader_anyrmg
 
 
 
@@ -64,7 +69,6 @@ PRESET_MENU:
 !PRESET_WRITE_END   = $0000
 !PRESET_WRITE_8     = $0001
 !PRESET_WRITE_16    = $0002
-!PRESET_WRITE_ITEM  = $0003
 
 !PRESET_WRITE_2N    = $0004
 !PRESET_WRITE_2N1   = $0005
@@ -78,10 +82,6 @@ endmacro
 
 macro write_7F()
 	dw !PRESET_WRITE_7F
-endmacro
-
-macro write_items()
-	dw !PRESET_WRITE_ITEM
 endmacro
 
 macro write8_enable()
@@ -150,32 +150,111 @@ endmacro
 ;	dw Unknown 2
 ;	dw Unknown 3
 ;
-;	wram data
+;	wram_data:
+;	dw WRAM_ADDRESS : db VAL
 ;	startPersistence(startofdata)
 ;	startSRAM(endofdata)
-;
-; wram_data_pointer:
-; dw WRAM_ADDRESS : db VAL
 ;
 ; special commands:
 ; dw $0000 - end of data
 ; dw $0001 - swap to 8-bit write mode
 ; dw $0002 - swap to 16-bit write mode
-; dw $0003 - swap to write items mode (please be in bank 7E)
 ; dw $0004 - swap to 16-bit write 2n bytes mode
 ; dw $0005 - swap to 16-bit write 2n+1 bytes mode
 
 ; dw $000F - swap to bank 7F (write mode becomes 8 bit)
-; format:
-;   dw ADDR : db n
+
+preset_load_last_preset:
+	REP #$20
+	LDA.w SA1IRAM.preset_addr
+	BNE preset_load
+
 
 preset_load:
+	SEP #$30
 
-	SEP #$20
-	STZ.w $4200
-
-	PEA.w $3000
+	PEA.w $0000
 	PLD
+
+	; clear camera shake offsets
+	REP #$20
+	STZ.w $011A : STZ.w $011C
+
+	; clear stuff for text if needed
+	LDA.b $10 : CMP.w #$020E
+	BNE .no_text
+
+	; TODO do this myself
+;	LDA.w $1CD2 : STA.w $1CD0
+;	XBA : STA.w $1002
+;	LDA.w #$2E42 : STA.w $1004
+;	LDA.w #$387F : STA.w $1006
+;	LDA.w #$FFFF : STA.w $1008
+;
+;	SEP #$20
+;	LDA.b #$01 : STA.b $14
+;	STZ $1CD8
+;
+;	STZ.b $12 ; wait for NMI to clear hud
+;--	LDA.b $12 : BEQ --
+
+.no_text
+	SEP #$30
+	STZ.w $0128 ; disable IRQ
+	STZ.w $4200 ; disable NMI
+
+	; big blocks of zeros clear tile map
+	REP #$20
+	LDA.w #$2100 : TCD
+
+	LDX.b #$80 : STX.b $2100
+
+	LDA.w #ZeroLand+1 : STA.w $4302
+	LDX.b #ZeroLand>>16 : STX.w $4304
+	LDA.w #$8008 : STA.w $4300
+
+	LDY.b #$01
+	STY.b $2183 ; bank 7F to start
+
+	; clear some sprite stuff
+	LDA.w #$F800 : STA.b $2181
+	LDA.w #$0020 : STA.w $4305
+	STY.w $420B
+
+	LDA.w #$DF80 : STA.b $2181
+	LDA.w #$1200 : STA.w $4305
+	STY.w $420B
+
+	; clear tile map
+	LDA.w #$2000 : STA.b $2181
+	STA.w $4305 ; happens to be number of bytes to write too
+	STY.w $420B
+
+	STZ.b $2182 ; bank 7E now
+
+	; clear sram mirror
+	LDA.w #$F000 : STA.b $2181
+	LDA.w #$0500 : STA.w $4305
+	STY.w $420B
+
+	; clear some wram
+	STA.w $4305 ; 0x500 bytes again, for wram
+	LDA.w #$0B00 : STA.b $2181
+	STY.w $420B
+
+	; no point in looping these
+	STZ.w $029E+0
+	STZ.w $029E+2
+	STZ.w $029E+4
+	STZ.w $029E+6
+	STZ.w $029E+8
+	STZ.w $03FC
+	STZ.w $02EC
+	STZ.w $02F0
+	STZ.w $0ABD
+
+	; start loading preset data
+	LDA.w #$3000 : TCD
 
 	SEP #$20
 	LDA.b #$7E
@@ -191,6 +270,10 @@ preset_load:
 
 	; fill up addresses from preset header
 	REP #$31
+	LDA.b SA1IRAM.preset_addr
+	STA.b SA1IRAM.preset_reader
+
+	print pc
 	LDY.w #$0002 ; start getting data for the preset
 
 	; get the persistence data location
@@ -199,16 +282,16 @@ preset_load:
 
 	LDA.b [SA1IRAM.preset_addr], Y
 	STA.b SA1IRAM.preset_pert_end
-
 	INY : INY
+
 	LDA.b [SA1IRAM.preset_addr], Y
 	STA.b SA1IRAM.preset_prog_end
-
+	INY : INY
 
 	; get stuff every preset has
 
 	; Room/Screen ID
-	LDA.b [SA1IRAM.preset_addr] : PHA ; save this
+	LDA.b [SA1IRAM.preset_addr], Y : INY : INY : PHA ; save this
 
 	; Link X and Y
 	LDA.b [SA1IRAM.preset_addr], Y : INY #2 : STA.w $0022
@@ -216,12 +299,19 @@ preset_load:
 
 	; Camera V and H
 	LDA.b [SA1IRAM.preset_addr], Y : INY #2 : STA.w $00E6 : STA.w $00E8
+	SEC : SBC.w #$0186 : AND.w #$01FF ; TODO tinker with these SBC
+	STA.w $061A : DEC : DEC : STA.w $0618
+
+	LDA.b [SA1IRAM.preset_addr], Y : INY #2 : STA.w $00E0 : STA.w $00E2
 	SEC : SBC.w #$017F : AND.w #$01FF
 	STA.w $061E : DEC : DEC : STA.w $061C
 
-	LDA.b [SA1IRAM.preset_addr], Y : INY #2 : STA.w $00E0 : STA.w $00E2
-	SEC : SBC.w #$0086 : AND.w #$01FF
-	STA.w $0618 : DEC : DEC : STA.w $061A
+	SEP #$20
+	; mirror portal
+	LDA.b [SA1IRAM.preset_addr], Y : INY : STA.w $1ABF
+	LDA.b [SA1IRAM.preset_addr], Y : INY : STA.w $1ACF
+	LDA.b [SA1IRAM.preset_addr], Y : INY : STA.w $1ADF
+	LDA.b [SA1IRAM.preset_addr], Y : INY : STA.w $1AEF
 
 	; Item
 	LDA.b [SA1IRAM.preset_addr], Y : INY : STA.w $0303
@@ -229,6 +319,7 @@ preset_load:
 	; Link's direction
 	LDA.b [SA1IRAM.preset_addr], Y : INY : STA.w $002F
 
+	REP #$30
 	PLA ; get ID back
 	LDX.b SA1IRAM.preset_type
 	JSR (.preset_types, X)
@@ -236,17 +327,22 @@ preset_load:
 	; do the arbitrary writes first
 	REP #$31
 	LDA.w #$0001
-	JSR .new_command
-
+	JSR .new_command_preload
 
 	SEP #$30 ; bank 7E again
 	LDA.b #$7E
 	PHA
 	PLB
 
-	REP #$30
+	REP #$31 ; clear carry for the sbc on purpose
+
 	; now do the persistent writes
 	LDY.w #$0000
+	LDA.b SA1IRAM.preset_pert
+	SBC.b SA1IRAM.preset_pert_end
+	BCC .skip_persist
+
+	STA.b SA1IRAM.preset_pert_end
 	LDA.b SA1IRAM.preset_pert
 	STA.b SA1IRAM.preset_reader
 
@@ -254,6 +350,9 @@ preset_load:
 	JSR .start_arb
 	CPY.b SA1IRAM.preset_pert_end
 	BCC .persist
+
+.skip_persist
+	JSR .writeSRAM
 
 	; time for some fixers
 	PHK
@@ -276,10 +375,10 @@ preset_load:
 	ASL : ASL ; get offset for this
 	TAY
 
-	LDX.w .item_HUD+0, Y ; bank0D offset
+	LDX.w .item_HUD-4, Y ; bank0D offset
 	STX.b SA1IRAM.preset_reader2
 
-	LDA.w .item_HUD+2, Y ; bank7E SRAM val
+	LDA.w .item_HUD-2, Y ; bank7E SRAM val
 	STA.b SA1IRAM.preset_reader+0
 
 	LDA.b [SA1IRAM.preset_reader]
@@ -294,6 +393,7 @@ preset_load:
 	AND.w #$00FF
 
 .normal_item
+	ASL
 	ASL
 	ASL
 	ADC.b SA1IRAM.preset_reader2
@@ -322,7 +422,7 @@ preset_load:
 	; add sanc heart for nmg
 	LDA.w !ram_preset_category
 	AND.w #$00FF
-	BEQ .notNMG
+	BNE .notNMG
 
 	; add powder for nmg
 	LDA.b SA1IRAM.preset_addr
@@ -339,7 +439,7 @@ preset_load:
 	LDA.b SA1IRAM.preset_addr
 
 .nosanc
-	CMP.w #presetmenu_nmg_eastern_after_lost_woods
+	CMP.w #presetmenu_nmg_aga_after_lost_woods
 	BCC .noitembonus
 
 	SEP #$20
@@ -352,7 +452,7 @@ preset_load:
 
 
 .done
-	SEP #$20
+	SEP #$30
 	LDA.b #$41 : STA.b SA1IRAM.TIMER_FLAG
 
 	LDA.b #$00
@@ -363,7 +463,37 @@ preset_load:
 	PLD
 
 	; reset stuff before preset goes
+
+	; Reload graphics and palette for sword, shield and armor
+	JSL DecompSwordGfx
+	JSL Palette_Sword
+	JSL DecompShieldGfx
+	JSL Palette_Shield
+	JSL Palette_Armor
+
+	LDA.b $1B : BEQ .overworld
+
+	JSL UpdateBarrierTileChr
+
+	LDA.b $11 : PHA
+	LDA.b #$07 : STA.w $0690
+	JSL Dungeon_AnimateTrapDoors
+	PLA : STA.b $11
+
+.overworld
+	LDA.l $7EF3CC : PHP ; remember if no follower
+	CMP.b #$0D : BNE .superbomb
+
+	LDA.b #$FE : STA.w $04B4
+
+.superbomb
+	PLP : BEQ .no_tagalong
+	JSL Tagalong_LoadGfx
+
+.no_tagalong
+	SEP #$30
 	JSL Player_ResetState
+
 	STZ.w $02E4
 	STZ.w $0112
 	STZ.w $0345
@@ -381,6 +511,10 @@ preset_load:
 
 	JSL SNES_DISABLE_CUSTOM_NMI
 
+	;REP #$20
+	;LDX.w SA1IRAM.preset_type
+	;JSR (.after_func, X)
+
 	REP #$30
 	LDA.w #$01FF
 	TCS
@@ -392,6 +526,11 @@ preset_load:
 	STZ.b $12
 	JML $008034
 
+
+.preset_types
+	dw preset_abort_fast
+	dw presetload_dungeon
+	dw presetload_overworld
 
 ; $0303 -> $0202
 .item_to_menu
@@ -496,11 +635,12 @@ preset_load:
 	LDA.b [SA1IRAM.preset_reader], Y
 
 .new_command
+	INY
+	INY
+
+.new_command_preload
 	ASL
 	TAX
-
-	INY
-	INY
 	LDA.b [SA1IRAM.preset_reader], Y
 	STA.b SA1IRAM.preset_writer
 
@@ -574,17 +714,11 @@ preset_load:
 #preset_abort_fast:
 	RTS
 
-.preset_types
-	dw preset_abort_fast
-	dw preset_load_dungeon
-	dw preset_load_overworld
-
-
 .commands
 	dw .done_arb
 	dw .write8bit
 	dw .write16bit
-	dw .writeItems
+	dw .done
 
 	dw .write2N
 	dw .write2Nplus1
@@ -601,21 +735,16 @@ preset_load:
 	dw .done_arb
 	dw .toBank7F
 
-
-
-
-
 .writeSRAM
-	SEP #$21
+	SEP #$20
 	LDA.b #$7E
 	PHA
 	PLB
-	REP #$20
+	REP #$21
 
-	INY
-	INY
-
-
+	LDA.b SA1IRAM.preset_prog_end
+	SBC.b SA1IRAM.preset_prog
+	STA.b SA1IRAM.preset_writer
 
 	LDY.w #$0000
 	BRA ..start
@@ -638,7 +767,7 @@ preset_load:
 	BPL ..write_room
 
 	SEP #$20
-	LDA.b [SA1IRAM.preset_reader], Y
+	LDA.b [SA1IRAM.preset_prog], Y
 	STA.w $7E0000, X
 	REP #$20
 	BRA ..next
@@ -652,100 +781,56 @@ preset_load:
 .done_arb
 	RTS
 
-
-
-.writeItems:
-	SEP #$20
-; BYTE 1:
-; aabbbbbb
-; a - bow
-; b - bombs
-; 
-
-	SEP #$20
-	
-
-; BYTE 1:
-; abcdefgh
-; a - 
-; b - 
-; c - 
-; d - 
-; e - 
-; f - 
-; g - 
-; h - 
-
-; BYTE 1:
-; abcdefgh
-; a - 
-; b - 
-; c - 
-; d - 
-; e - 
-; f - 
-; g - 
-; h - 
-
-; BYTE 1:
-; abcdefgh
-; a - 
-; b - 
-; c - 
-; d - 
-; e - 
-; f - 
-; g - 
-; h - 
-
-; BYTE 1:
-; abcdefgh
-; a - 
-; b - 
-; c - 
-; d - 
-; e - 
-; f - 
-; g - 
-; h - 
-
-; BYTE 1:
-; abcdefgh
-; a - 
-; b - 
-; c - 
-; d - 
-; e - 
-; f - 
-; g - 
-; h - 
-
-	JMP .new_command
 ;===============================================================================
+presetload_overworld:
+	; preloaded with screen ID
+	STA.w $008A
 
+	LDA.b [SA1IRAM.preset_addr], Y : INY #2
+	STA.w $061C : DEC : DEC : STA.w $061E
 
+	LDA.b [SA1IRAM.preset_addr], Y : INY #2
+	STA.w $061C : DEC : DEC : STA.w $061E
 
+	SEP #$30
+	STZ.w $001B ; outdoors
 
+	BIT.w $008A ; do mirror portal?
+	BVC .lightworld
 
+	LDA.b #$6C ; add portal to sprite list
+	STA.w $0E2F
 
+	LDA.b #$08
+	STA.w $0DDF
 
-preset_load_dungeon:
+.lightworld
+	JSR SaveALot
+	JSL PresetLoadArea_OW
+	JSR PullALot
+
+	RTS
+
+presetload_dungeon:
 	; we come preloaded with dungeon ID
-	STA.w $00A0 : STA.w $04BE
+	STA.w $00A0 : STA.w $048E
+
+	STZ.w $00A6
 
 	; entrance
 	SEP #$20
-	LDA.b [SA1IRAM.preset_addr], Y
+	LDA.b [SA1IRAM.preset_addr], Y : INY
 	STA.w $010E
 
+	LDA.b #$01 : STA.w $001B
 	; quadrants
-	STZ.w $00A6
 
 	; ab....cd
 	; a bit that goes in $A6
 	; b bit that goes in $A7
 	; c bit that goes in $A9
 	; d bit that goes in $AA
+	SEP #$20
 	LDA.b [SA1IRAM.preset_addr], Y
 	INY
 
@@ -801,7 +886,47 @@ preset_load_dungeon:
 	STZ.w $0698
 	LDA.w #$01F8 : STA.w $00EC
 
-	SEP #$20
-	LDA.b #$01 : STA.w $001B
 
+	REP #$30
+	LDA.w #$000F : STA.w $0010
+	LDA.w #$FFFF : STA.l $7EF3C5
+
+	JSR SaveALot
+	JSL PresetLoadArea_UW
+	JSL $09C114
+	JSR PullALot
+
+	LDA.w #$0000 : STA.l $7EF3C5
+	LDA.w #$0007 : STA.w $0010
+
+	RTS
+
+SaveALot:
+	REP #$30
+	PLA
+
+	PHP
+	PHD
+	PHY
+	PHX
+	PHB
+
+	PHA
+	LDA.w #$0000
+	TCD
+	SEP #$30
+
+	RTS
+
+PullALot:
+	REP #$30
+	PLA
+
+	PLB
+	PLX
+	PLY
+	PLD
+	PLP
+
+	PHA
 	RTS
