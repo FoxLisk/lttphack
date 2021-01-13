@@ -36,10 +36,11 @@ incsrc cm_linkstate.asm
 incsrc cm_gameplay.asm
 incsrc cm_rng.asm
 incsrc cm_hud.asm
-incsrc cm_controls.asm
+incsrc cm_shortcuts.asm
 incsrc cm_config.asm
 
 CM_END:
+print ""
 print "Custom menu size: $", hex(CM_END-CM)
 
 org $268000
@@ -54,6 +55,10 @@ org $298000
 ; ---- data ----
 
 org $308000
+print ""
+print "Preset data:"
+print "--------------------"
+
 incsrc cm_presets_nmg.asm
 incsrc cm_presets_anyrmg.asm
 

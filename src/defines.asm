@@ -177,7 +177,7 @@ endmacro
 
 %def_perm_sram("preset_category", $0000)
 
-%def_perm_sram("hud_font", 0)
+%def_perm_sram("hud_font", 1)
 %def_perm_sram("input_display", !ON)
 %def_perm_sram("heart_display", 0)
 %def_perm_sram("feature_music", !ON)

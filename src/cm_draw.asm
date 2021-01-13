@@ -330,15 +330,6 @@ CMDRAW_ERROR:
 #ERROR_TEXT:
 	db "BAD VAL", $FF
 
-CMDRAW_ON:
-	REP #$20
-	LDA.w #.text
-	JSR CMDRAW_WORD
-	RTL
-
-.text
-	db "On", $FF
-
 CMDRAW_YES:
 	REP #$20
 	LDA.w #.text
@@ -347,15 +338,6 @@ CMDRAW_YES:
 
 .text
 	db "Yes", $FF
-
-CMDRAW_OFF:
-	REP #$20
-	LDA.w #.text
-	JSR CMDRAW_WORD
-	RTL
-
-.text
-	db "Off", $FF
 
 CMDRAW_NO:
 	REP #$20
@@ -374,6 +356,11 @@ CMDRAW_UNFIXED:
 
 .text
 	db "Unfixed", $FF
+
+CMDRAW_ONOFF:
+%list_header(2)
+	%list_item("Off")
+	%list_item("On")
 
 CMDRAW_HEX_2_DIGITS:
 	LDY.w #2

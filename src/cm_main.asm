@@ -15,7 +15,7 @@ cm_mainmenu:
 	%submenu("RNG control", RNG_SUBMENU)
 	%submenu("HUD extras", HUDEXTRAS_SUBMENU)
 	%submenu("Shortcuts", SHORTCUTS_SUBMENU)
-	%submenu("Settings", CONFIG_SUBMENU)
+	%submenu("Configuration", CONFIG_SUBMENU)
 
 
 ;===============================================================================

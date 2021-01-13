@@ -165,13 +165,29 @@ macro toggle_func(name, addr, func)
 #?here:
 endmacro
 
-%MenuAction("TOGGLE_FUNC_CUSTOMTEXT", 8, $6B)
+%MenuAction("TOGGLE_CUSTOMTEXT", 6, $6B)
+macro toggle_customtext(name, addr, addrtext)
+	%add_self()
+	db !CM_TOGGLE_CUSTOMTEXT
+	dw <addr>
+	dl select(equal(<addrtext>,this), ?here, <addrtext>)
+	db "<name>", $FF
+
+#?here:
+endmacro
+
+macro toggle_customtext_here(name, addr)
+	%toggle_customtext(<name>, <addr>, this)
+	%list_header(2)
+endmacro
+
+%MenuAction("TOGGLE_FUNC_CUSTOMTEXT", 9, $6B)
 macro toggle_func_customtext(name, addr, func, addrtext)
 	%add_self()
 	db !CM_TOGGLE_FUNC_CUSTOMTEXT
 	dw <addr>
 	dl select(equal(<addrtext>,this), ?here, <addrtext>)
-	dw <func>
+	dl <func>
 	db "<name>", $FF
 
 #?here:
@@ -209,6 +225,25 @@ macro toggle_long_func_customtext_here(name, addr, func)
 	%toggle_long_func_customtext(<name>, <addr>, <func>, this)
 	%list_header(2)
 endmacro
+
+;-------------------------------------------------------------------------------
+macro toggle_onoff(name, addr)
+	;%toggle_customtext(<name>, <addr>, CMDRAW_ONOFF)
+	%toggle(<name>, <addr>)
+endmacro
+
+macro toggle_func_onoff(name, addr, func)
+	;%toggle_func_customtext(<name>, <addr>, <func>, CMDRAW_ONOFF)
+	%toggle_func(<name>, <addr>, <func>)
+endmacro
+
+macro toggle_func_onoff_here(name, addr)
+	;%toggle_func_customtext(<name>, <addr>, ?here, CMDRAW_ONOFF)
+	%toggle_func(<name>, <addr>, ?here)
+#?here:
+endmacro
+
+
 
 ;-------------------------------------------------------------------------------
 %MenuAction("SUBMENU", 4, $69)

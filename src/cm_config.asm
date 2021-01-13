@@ -2,10 +2,10 @@ CONFIG_SUBMENU:
 %menu_header("CONFIGURATION", 6)
 
 ;===============================================================================
-%toggle("Rerandomize", !ram_rerandomize_toggle)
+%toggle_onoff("Rerandomize", !ram_rerandomize_toggle)
 
 ;===============================================================================
-%toggle_func("Music", !ram_feature_music, this)
+%toggle_func_onoff_here("Music", !ram_feature_music)
 	LDA.w !ram_feature_music
 	REP #$20
 	BNE ..unmute
@@ -36,7 +36,7 @@ CONFIG_SUBMENU:
 	RTL
 
 ;===============================================================================
-%toggle("Death reload", !ram_autoload_preset)
+%toggle_onoff("Death reload", !ram_autoload_preset)
 
 ;===============================================================================
 %choice_here("Preset cat", !ram_preset_category, 7)

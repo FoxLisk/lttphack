@@ -100,9 +100,9 @@ endmacro
 
 ;===============================================================================
 !ancprop_count = 4
-%choice("Line 1", !ram_ancprop1, !ancprop_count, ancprop_names)
-%choice("Line 2", !ram_ancprop2, !ancprop_count, ancprop_names)
-%choice("Line 3", !ram_ancprop3, !ancprop_count, ancprop_names)
+%choice("Ancilla prop 1", !ram_ancprop1, !ancprop_count, ancprop_names)
+%choice("Ancilla prop 2", !ram_ancprop2, !ancprop_count, ancprop_names)
+%choice("Ancilla prop 3", !ram_ancprop3, !ancprop_count, ancprop_names)
 
 #ancillawatch_props:
 	fillword $0C4A : fill !ancprop_count*2
@@ -126,10 +126,10 @@ endmacro
 	%new_ancprop($0C5E, "Item get")
 
 ;===============================================================================
-%toggle("Heart lag", !ram_heartlag_spinner)
+%toggle_onoff("Heart lag", !ram_heartlag_spinner)
 
 ;===============================================================================
-%toggle("QW indicator", !ram_qw_toggle)
+%toggle_onoff("QW indicator", !ram_qw_toggle)
 
 ;===============================================================================
-%toggle("Lanmola cycs", !ram_toggle_lanmola_cycles)
+%toggle_onoff("Lanmola cycs", !ram_toggle_lanmola_cycles)

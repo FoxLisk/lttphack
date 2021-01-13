@@ -132,8 +132,9 @@ struct SA1IRAM $003000
 	; extra stuff
 	.LanmoCycles: skip 16 ; 16 to be safe
 
+	print ""
+	print "SA1 dp: $", pc
 .savethis_end
-	print "SA1 dp: ", pc
 
 	; ancilla watch
 	.LINEVAL:
@@ -209,7 +210,7 @@ struct SA1IRAM $003000
 	.CopyOf_061E: skip 1
 	.CopyOf_061F: skip 1
 
-	print "SA1 mirroring: ", pc
+	print "SA1 mirroring: $", pc
 endstruct
 
 ;==============================================================================
