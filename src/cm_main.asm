@@ -13,8 +13,8 @@ cm_mainmenu:
 	%submenu("Link state", LINKSTATE_SUBMENU)
 	%submenu("Gameplay", GAMEPLAY_SUBMENU)
 	%submenu("RNG control", RNG_SUBMENU)
-	%submenu("Shortcuts", SHORTCUTS_SUBMENU)
 	%submenu("HUD extras", HUDEXTRAS_SUBMENU)
+	%submenu("Shortcuts", SHORTCUTS_SUBMENU)
 	%submenu("Settings", CONFIG_SUBMENU)
 
 
@@ -83,26 +83,29 @@ CM_DrawMenu:
 CM_Return:
 	REP #$20
 	PLA ; remove the return of the JSR
-
-	LDA.w #2
-	STA.b SA1IRAM.cm_submodule
-
-	SEP #$20
 	PLD
 	PLB
+
+CM_Exiting:
+	REP #$20
+	LDA.w #2
+	STA.l SA1IRAM.cm_submodule
+
+	SEP #$20
 
 	STZ.w $4200
 	LDA.b #$80
 	STA.w $2100
 
 	JSL load_default_tileset
-	JSL CleanVRAMSW
+	JSL reinit_counteraddr
 
 	SEP #$30
 	LDA.b #$15 : STA.w $012E
 
-	INC.b $12
+	STZ.b $12
 	INC.b $15 ; trigger a CGRAM update
+
 	JSL SNES_DISABLE_CUSTOM_NMI
 
 	LDA.b #$81 : STA.w $4200
@@ -151,13 +154,13 @@ CM_PrepPPU:
 	; word-access, incr by 1
 	LDA #$80 : STA $2115
 
-	LDX #$7000 : STX $2116 ; VRAM address (E000 in vram)
-	LDX #cm_gfx>>0 : STX $4302 ; Source offset
-	LDA #cm_gfx>>16 : STA $4304 ; Source bank
-	LDX #$1800 : STX $4305 ; Size (0x10 = 1 tile)
-	LDA #$01 : STA $4300 ; word, normal increment (DMA MODE)
-	LDA #$18 : STA $4301 ; destination (VRAM write)
-	LDA #$01 : STA $420B ; initiate DMA (channel 1)
+	LDX.w #$7000 : STX.w $2116 ; VRAM address (E000 in vram)
+	LDX.w #cm_gfx>>0 : STX.w $4352 ; Source offset
+	LDA.b #cm_gfx>>16 : STA.w $4354 ; Source bank
+	LDX.w #$1800 : STX.w $4355 ; Size (0x10 = 1 tile)
+	LDA.b #$01 : STA.w $4350 ; word, normal increment (DMA MODE)
+	LDA.b #$18 : STA.w $4351 ; destination (VRAM write)
+	LDA.b #$20 : STA.w $420B ; initiate DMA (channel 1)
 	RTS
 
 ; save temp variables that the menu uses

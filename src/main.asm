@@ -13,8 +13,6 @@ incsrc gamemode.asm
 incsrc nmi.asm
 incsrc timers.asm
 incsrc hudextras.asm
-incsrc hudextras_uw.asm
-incsrc hudextras_ancilla.asm
 incsrc rng.asm
 incsrc misc.asm
 

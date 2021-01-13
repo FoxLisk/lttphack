@@ -1,22 +1,3 @@
-function char(n) = $2150+n
-
-!BROWN_PAL #= (0<<10)
-!RED_PAL #= (1<<10)
-!YELLOW_PAL #= (2<<10)
-!BLUE_PAL #= (3<<10)
-!GRAY_PAL #= (4<<10)
-!REDYELLOW #= (5<<10)
-!TEXT_PAL #= (6<<10)
-!GREEN_PAL #= (7<<10)
-
-!VFLIP #= (1<<15)
-!HFLIP #= (1<<14)
-
-!P3 = $2000
-!SYNCED = char($10)|!BLUE_PAL
-!DESYNC = char($11)|!RED_PAL
-!HAMMER = char($12)|!BROWN_PAL
-
 ; $A0[2] room ID
 ; find a place to cache original room id that only works on proper transitions?
 
@@ -47,12 +28,7 @@ function char(n) = $2150+n
 ; 01234567890123456789012345678901
 ; ................................
 
-NoSuperWatch:
-	LDA #$20
 
-.set
-	TRB.b SA1IRAM.HDMA_ASK
-	RTS
 
 UpdateUWWindow:
 	LDA.w !ram_superwatch
@@ -134,8 +110,7 @@ calc_quadrant:
 	BRA .doQuadrant
 
 .east
-	BEQ .northeast ; $AA is 0 or 2, and will be the only bit remaining, no matter what
-
+	BEQ .northeast
 .southeast
 	LDY #1
 	LDA.w #char(5+1)|!RED_PAL
@@ -196,7 +171,6 @@ calc_correct_quadrant:
 
 draw_pits:
 	LDX #(64+48)
-	LDA.w SA1IRAM.CopyOf_7EC000
 	JSR DrawHexSW_two_white
 
 	REP #$30
@@ -369,93 +343,4 @@ calc_room_flags_palettes:
 	dw !BLUE_PAL, !RED_PAL, !GREEN_PAL, !YELLOW_PAL
 
 
-DrawHexSW:
-.four
-..white
-	LDY.b #(!P3|!RED_PAL)>>8
-	BRA ..set
 
-..yellow
-	LDY.b #(!P3|!REDYELLOW)>>8
-	BRA ..set
-
-..gray
-	LDY.b #(!P3|!GRAY_PAL)>>8
-	BRA ..set
-
-..red
-	LDY.b #(!P3|!TEXT_PAL)>>8
-	BRA ..set
-
-..set
-	STY.b SA1IRAM.SCRATCH+11
-	LDY.b #$10
-	STY.b SA1IRAM.SCRATCH+10
-	LDY.b #4
-	BRA .draw_n_digits
-
-.three
-..white
-	LDY.b #(!P3|!RED_PAL)>>8
-	BRA ..set
-
-..yellow
-	LDY.b #(!P3|!REDYELLOW)>>8
-	BRA ..set
-
-..gray
-	LDY.b #(!P3|!GRAY_PAL)>>8
-	BRA ..set
-
-..red
-	LDY.b #(!P3|!TEXT_PAL)>>8
-	BRA ..set
-
-..set
-	STY.b SA1IRAM.SCRATCH+11
-	LDY.b #$10
-	STY.b SA1IRAM.SCRATCH+10
-	LDY.b #3
-	BRA .draw_n_digits
-
-.two
-..white
-	LDY.b #(!P3|!RED_PAL)>>8
-	BRA ..set
-
-..yellow
-	LDY.b #(!P3|!REDYELLOW)>>8
-	BRA ..set
-
-..gray
-	LDY.b #(!P3|!GRAY_PAL)>>8
-	BRA ..set
-
-..red
-	LDY.b #(!P3|!TEXT_PAL)>>8
-	BRA ..set
-
-..set
-	STY.b SA1IRAM.SCRATCH+11
-	LDY.b #$10
-	STY.b SA1IRAM.SCRATCH+10
-	LDY.b #2
-	BRA .draw_n_digits
-
-.next_digit
-	LSR
-	LSR
-	LSR
-	LSR
-
-.draw_n_digits
-	PHA ; remember coordinates
-	AND.w #$000F ; get digit
-	ORA.b SA1IRAM.SCRATCH+10 ; add in color
-	STA.w SA1RAM.SW_BUFFER+6, X
-	PLA ; recover value
-	DEX
-	DEX
-	DEY
-	BNE .next_digit
-	RTS

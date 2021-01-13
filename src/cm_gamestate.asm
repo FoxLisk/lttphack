@@ -29,7 +29,8 @@ GAMESTATE_SUBMENU:
 	RTL
 
 ;===============================================================================
-%numfield_pressfunc_hex("Load room", $00A0, $00, $FF, $10, this)
+%numfield_pressfunc_hex("Load room", SA1RAM.loadroomid, $00, $FF, $10, this)
+	LDA.w SA1RAM.loadroomid
 	RTL
 
 ;===============================================================================

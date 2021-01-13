@@ -153,6 +153,8 @@ init_hook:
 	JSL $0EF572
 	JSL DoWRAM4BPP
 
+	JSL reinit_counteraddr
+
 	SEP #$30
 	LDA.b #$15 : STA.b $1C
 

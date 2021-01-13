@@ -388,18 +388,16 @@ CMDO_PRESET_OW:
 	LDA.b SA1IRAM.cm_writer+0
 	STA.b SA1IRAM.preset_addr+0
 
-	LDA.w #2
-	STA.b SA1IRAM.cm_submodule
-
+	JSL CM_Exiting
 	SEP #$30
+	STZ.w $4200
+
 	LDA.b SA1IRAM.cm_current_menu+2
 	STA.b SA1IRAM.preset_addr+2
 
 	LDA.b #$80
 	STA.w $2100
 
-	JSL load_default_tileset
-	JSL CleanVRAMSW
 	JML preset_load
 
 CMDO_CTRL_SHORTCUT_FINAL:

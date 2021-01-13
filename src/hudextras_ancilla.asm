@@ -51,13 +51,6 @@ UpdateAncillaWindow:
 
 	LDA #$24 : XBA
 
-	; do search index
-	LDA.w SA1IRAM.CopyOf_03C4 : LSR #4
-	ORA #$10 : TAX : STX.w SA1RAM.SW_BUFFER+0
-
-	LDA.w SA1IRAM.CopyOf_03C4 : AND #$0F
-	ORA #$10 : TAX : STX.w SA1RAM.SW_BUFFER+2
-
 	LDA #$38 : XBA
 
 	; do eg thing
@@ -147,3 +140,93 @@ write_2hex_ancilla:
 	INC.b SA1IRAM.SCRATCH+10
 	RTS
 
+DrawHexSW:
+.four
+..white
+	LDY.b #(!P3|!RED_PAL)>>8
+	BRA ..set
+
+..yellow
+	LDY.b #(!P3|!REDYELLOW)>>8
+	BRA ..set
+
+..gray
+	LDY.b #(!P3|!GRAY_PAL)>>8
+	BRA ..set
+
+..red
+	LDY.b #(!P3|!TEXT_PAL)>>8
+	BRA ..set
+
+..set
+	STY.b SA1IRAM.SCRATCH+11
+	LDY.b #$10
+	STY.b SA1IRAM.SCRATCH+10
+	LDY.b #4
+	BRA .draw_n_digits
+
+.three
+..white
+	LDY.b #(!P3|!RED_PAL)>>8
+	BRA ..set
+
+..yellow
+	LDY.b #(!P3|!REDYELLOW)>>8
+	BRA ..set
+
+..gray
+	LDY.b #(!P3|!GRAY_PAL)>>8
+	BRA ..set
+
+..red
+	LDY.b #(!P3|!TEXT_PAL)>>8
+	BRA ..set
+
+..set
+	STY.b SA1IRAM.SCRATCH+11
+	LDY.b #$10
+	STY.b SA1IRAM.SCRATCH+10
+	LDY.b #3
+	BRA .draw_n_digits
+
+.two
+..white
+	LDY.b #(!P3|!RED_PAL)>>8
+	BRA ..set
+
+..yellow
+	LDY.b #(!P3|!REDYELLOW)>>8
+	BRA ..set
+
+..gray
+	LDY.b #(!P3|!GRAY_PAL)>>8
+	BRA ..set
+
+..red
+	LDY.b #(!P3|!TEXT_PAL)>>8
+	BRA ..set
+
+..set
+	STY.b SA1IRAM.SCRATCH+11
+	LDY.b #$10
+	STY.b SA1IRAM.SCRATCH+10
+	LDY.b #2
+	BRA .draw_n_digits
+
+.next_digit
+	LSR
+	LSR
+	LSR
+	LSR
+
+.draw_n_digits
+	PHA ; remember coordinates
+	AND.w #$000F ; get digit
+	ORA.b SA1IRAM.SCRATCH+10 ; add in color
+	STA.w SA1RAM.SW_BUFFER+6, X
+	PLA ; recover value
+	DEX
+	DEX
+	DEY
+	BNE .next_digit
+	RTS

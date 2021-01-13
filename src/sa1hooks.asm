@@ -1,10 +1,8 @@
 pushpc
 org $008000
 struct SA1IRAM $003000
-	.SCRATCH: skip 16
-
-	.HDMA_ASK: skip 1
 	.SHORTCUT_USED: skip 2
+	.SCRATCH: skip 16
 
 	.CONTROLLER_1:
 	.CopyOf_F2: skip 1
@@ -81,6 +79,18 @@ struct SA1IRAM $003000
 	.SEG_TIME_S_DISPLAY: skip 2
 	.SEG_TIME_M_DISPLAY: skip 2
 
+	.CNTVAL1: skip 2
+	.CNTVAL2: skip 2
+	.CNTVAL3: skip 2
+	.CNTVAL4: skip 2
+	.CNTVAL5: skip 2
+
+	.CNTADD1: skip 2
+	.CNTADD2: skip 2
+	.CNTADD3: skip 2
+	.CNTADD4: skip 2
+	.CNTADD5: skip 2
+
 	.CopyOf_10: skip 1
 	.CopyOf_11: skip 1
 	.CopyOf_12: skip 1
@@ -90,8 +100,7 @@ struct SA1IRAM $003000
 	.CopyOf_21: skip 1
 	.CopyOf_22: skip 1
 	.CopyOf_23: skip 1
-	.CopyOf_2A: skip 1
-	.CopyOf_2B: skip 1
+
 	.CopyOf_30: skip 1
 	.CopyOf_31: skip 1
 	.CopyOf_6C: skip 1
@@ -104,16 +113,12 @@ struct SA1IRAM $003000
 	.CopyOf_E3: skip 1
 	.CopyOf_E8: skip 1
 	.CopyOf_E9: skip 1
-	.CopyOf_EE: skip 1
 
 	.CopyOf_04A0: skip 1
 	.CopyOf_04B4: skip 1
 
 	.CopyOf_02A2: skip 1
 	.CopyOf_02FA: skip 1
-
-	.CopyOf_0B08: skip 1
-	.CopyOf_0B09: skip 1
 
 	.CopyOf_7EC011: skip 1
 	.CopyOf_7EF36C: skip 1
@@ -131,7 +136,14 @@ struct SA1IRAM $003000
 	print "SA1 dp: ", pc
 
 	; ancilla watch
-	.CopyOf_03C4: skip 1
+	.LINEVAL:
+	.LINE1VAL: skip 16
+	.LINE2VAL: skip 16
+	.LINE3VAL: skip 16
+	.LINE4VAL: skip 16
+	
+	
+	
 	.CopyOf_03A4: skip 1
 	.CopyOf_0C4A: skip 10
 	.CopyOf_0C5E: skip 10
@@ -163,8 +175,6 @@ struct SA1IRAM $003000
 	.CopyOf_068F: skip 1
 	.CopyOf_0690: skip 1
 	.CopyOf_0691: skip 1
-
-	.CopyOf_7EC000: skip 1
 
 	.CopyOf_0600: skip 1
 	.CopyOf_0601: skip 1
@@ -246,87 +256,169 @@ WasteTimeIfNeeded:
 	JML $008034
 
 CacheSA1Stuff:
-	REP #$20 ; 16 bit first
-	LDA.b $10 : STA.w SA1IRAM.CopyOf_10
-	LDA.b $1A : STA.w SA1IRAM.CopyOf_1A
-	LDA.b $20 : STA.w SA1IRAM.CopyOf_20
-	LDA.b $22 : STA.w SA1IRAM.CopyOf_22
-	LDA.b $2A : STA.w SA1IRAM.CopyOf_2A
-	LDA.b $30 : STA.w SA1IRAM.CopyOf_30
-	LDA.b $A0 : STA.w SA1IRAM.CopyOf_A0
-	LDA.b $A4 : STA.w SA1IRAM.CopyOf_A4
-	LDA.b $E2 : STA.w SA1IRAM.CopyOf_E2
-	LDA.b $E8 : STA.w SA1IRAM.CopyOf_E8
-	LDA.w $0B08 : STA.w SA1IRAM.CopyOf_0B08
-	LDA.l $7EF36C : STA.w SA1IRAM.CopyOf_7EF36C
+	REP #$30 ; 16 bit first
+	PHD
+	LDA.w #$3000
+	TCD
+
+	LDA.w $0010 : STA.b SA1IRAM.CopyOf_10
+	LDA.w $001A : STA.b SA1IRAM.CopyOf_1A
+	LDA.w $0020 : STA.b SA1IRAM.CopyOf_20
+	LDA.w $0022 : STA.b SA1IRAM.CopyOf_22
+	LDA.w $00A0 : STA.b SA1IRAM.CopyOf_A0
+	LDA.w $00A4 : STA.b SA1IRAM.CopyOf_A4
+	LDA.w $00E2 : STA.b SA1IRAM.CopyOf_E2
+	LDA.w $00E8 : STA.b SA1IRAM.CopyOf_E8
+	LDA.l $7EF36C : STA.b SA1IRAM.CopyOf_7EF36C
+
+	LDX.b SA1IRAM.CNTADD1 : LDA.l $7E0000, X : STA.b SA1IRAM.CNTVAL1
+	LDX.b SA1IRAM.CNTADD2 : LDA.l $7E0000, X : STA.b SA1IRAM.CNTVAL2
+	LDX.b SA1IRAM.CNTADD3 : LDA.l $7E0000, X : STA.b SA1IRAM.CNTVAL3
+	LDX.b SA1IRAM.CNTADD4 : LDA.l $7E0000, X : STA.b SA1IRAM.CNTVAL4
+	LDX.b SA1IRAM.CNTADD5 : LDA.l $7E0000, X : STA.b SA1IRAM.CNTVAL5
 
 	; 8 bit stuff
-	SEP #$20
-	LDA.b $6C : STA.w SA1IRAM.CopyOf_6C
-	LDA.b $EE : STA.w SA1IRAM.CopyOf_EE
-	LDA.b $B0 : STA.w SA1IRAM.CopyOf_B0
-	LDA.w $02A2 : STA.w SA1IRAM.CopyOf_02A2
-	LDA.w $02FA : STA.w SA1IRAM.CopyOf_02FA
-	LDA.w $04A0 : STA.w SA1IRAM.CopyOf_04A0
-	LDA.w $04B4 : STA.w SA1IRAM.CopyOf_04B4
-	LDA.l $7EC011 : STA.w SA1IRAM.CopyOf_7EC011
+	SEP #$30
+	LDA.w $006C : STA.b SA1IRAM.CopyOf_6C
+	LDA.w $00B0 : STA.b SA1IRAM.CopyOf_B0
+	LDA.w $02FA : STA.b SA1IRAM.CopyOf_02FA
+	LDA.w $04A0 : STA.b SA1IRAM.CopyOf_04A0
+	LDA.w $04B4 : STA.b SA1IRAM.CopyOf_04B4
+	LDA.l $7EC011 : STA.b SA1IRAM.CopyOf_7EC011
 
-	INC.w SA1IRAM.CachedThisFrame ; flag this
+	INC.b SA1IRAM.CachedThisFrame ; flag this
+
+	PLD
 	RTL
 
 Extra_SA1_Transfers:
 	SEP #$30
-	LDA.l !ram_superwatch
+	LDY.b #$00
+
+.next
+	LDA.w !ram_linecounter1, Y
 	ASL
 	TAX
-	SEP #$30
-	JSR (.superwatchtransfers, X)
+
+	PHY
+	PHP
+
+	TYA
+	ASL
+	ASL
+	ASL
+	TAY
+
+	JSR (.subs, X)
+
+	PLP
+	PLY
+	INY
+	INY
+	CPY.b #06
+	BCC .next
 
 	RTL
 
-.superwatchtransfers
-	dw ..off
-	dw ..ancillae
-	dw ..uw
-	dw ..off
+.subs
+	dw .nothing
+	dw .roomflag
+	dw .camerax
+	dw .cameray
+	dw .ancilla04
+	dw .ancilla59
+	dw .ancillaIX
 
-..ancillae
-	LDA.w $03C4 : STA.w SA1IRAM.CopyOf_03C4
-	LDA.w $03A4 : STA.w SA1IRAM.CopyOf_03A4
-
-	LDX.b #$09
---	LDA.w $0C4A, X : STA.w SA1IRAM.CopyOf_0C4A, X
-	LDA.w $0C5E, X : STA.w SA1IRAM.CopyOf_0C5E, X
-	DEX
-	BPL --
-
-..off
+.nothing
 	RTS
 
-..uw
+.roomflag
+	LDA.w $0401 : STA.w SA1IRAM.LINEVAL+0, Y
+
 	REP #$20
-	LDA.b $A6 : STA.w SA1IRAM.CopyOf_A6
-	LDA.b $A8 : STA.w SA1IRAM.CopyOf_A8
-	LDX.b $AA : STX.w SA1IRAM.CopyOf_AA
-	
-	LDA.w $0400 : STA.w SA1IRAM.CopyOf_0400
-	LDA.w $0402 : STA.w SA1IRAM.CopyOf_0402
-	LDX.w $0408 : STX.w SA1IRAM.CopyOf_0408
-	LDX.w $040A : STX.w SA1IRAM.CopyOf_040A
-	LDX.w $040C : STX.w SA1IRAM.CopyOf_040C
-	LDA.w $04BA : STA.w SA1IRAM.CopyOf_04BA
-	LDA.w $068E : STA.w SA1IRAM.CopyOf_068E
-	LDA.w $0690 : STA.w SA1IRAM.CopyOf_0690
-
-	LDA.l $7EC000 : TAX : STX.w SA1IRAM.CopyOf_7EC000
-
-	LDX.b #$1E
---	LDA.w $0600, X : STA.w SA1IRAM.CopyOf_0600, X
-	DEX
-	DEX
-	BPL --
+	LDA.w $0402 : STA.w SA1IRAM.LINEVAL+1, Y
+	LDA.w $0408 : STA.w SA1IRAM.LINEVAL+3, Y
 
 	RTS
+
+.camerax
+	LDA.b $A6 : STA.w SA1IRAM.LINEVAL+0, Y
+
+	REP #$20
+	LDA.b $E2 : STA.w SA1IRAM.LINEVAL+1, Y
+
+	LDA.w $0608 : STA.w SA1IRAM.LINEVAL+3, Y
+	LDA.w $060C : STA.w SA1IRAM.LINEVAL+5, Y
+	LDA.w $060A : STA.w SA1IRAM.LINEVAL+7, Y
+	LDA.w $060E : STA.w SA1IRAM.LINEVAL+9, Y
+	RTS
+
+.cameray
+	LDA.b $A7 : STA.w SA1IRAM.LINEVAL+0, Y
+
+	REP #$20
+	LDA.b $E2 : STA.w SA1IRAM.LINEVAL+1, Y
+
+	LDA.w $0600 : STA.w SA1IRAM.LINEVAL+3, Y
+	LDA.w $0604 : STA.w SA1IRAM.LINEVAL+5, Y
+	LDA.w $0602 : STA.w SA1IRAM.LINEVAL+7, Y
+	LDA.w $0606 : STA.w SA1IRAM.LINEVAL+9, Y
+	RTS
+
+.ancilla04
+	PEA.w $0000
+	BRA .saveancilla
+
+.ancilla59
+	PEA.w $0005
+	BRA .saveancilla
+
+.ancillaIX
+	REP #$31
+	LDA.w $03C4
+	AND.w #$00FF
+	DEC
+
+	CMP.w #$0080 ; if negative, show slots 0-4
+	BCS .ancilla04
+
+	CMP.w #5
+	BCC .ancilla04
+
+	PHA
+	BRA .saveancilla
+
+
+.saveancilla
+	REP #$30
+	PLA ; get offset of our property
+	STA.w SA1IRAM.LINEVAL+10, Y
+
+	PHY ; save Y
+	TYA
+	LSR ; /8 for props
+	LSR
+	LSR
+	TAY
+	LDA.w !ram_ancprop1, Y
+	PLY
+
+	ASL
+	TAX
+	LDA.l ancillawatch_props, X
+
+	STA.w SA1IRAM.LINEVAL+12, Y
+	CLC
+	ADC.w SA1IRAM.LINEVAL+10, Y
+	STA.w SA1IRAM.LINEVAL+14, Y
+	TAX
+
+	LDA.b $00, X : STA.w SA1IRAM.LINEVAL+0, Y
+	LDA.b $02, X : STA.w SA1IRAM.LINEVAL+2, Y
+	LDA.b $04, X : STA.w SA1IRAM.LINEVAL+4, Y
+
+	RTS
+
 
 ;==============================================================================
 InitSA1:
@@ -372,7 +464,6 @@ InitSA1:
 	STZ.w SA1IRAM.CopyOf_F4
 	STZ.w SA1IRAM.CopyOf_F6
 
-	STZ.w SA1IRAM.HDMA_ASK
 	STZ.w SA1IRAM.cm_submodule
 	STZ.w SA1IRAM.preset_addr
 	STZ.w SA1IRAM.TIMER_FLAG

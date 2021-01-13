@@ -4,11 +4,32 @@
 !red = $3810
 !gray = $2010
 
-; $6C   - in door
-; $EE   - EG
-; $EF   - EG swap
-; $114  - tile type
+function char(n) = $2150+n
+
+!BROWN_PAL #= (0<<10)
+!RED_PAL #= (1<<10)
+!YELLOW_PAL #= (2<<10)
+!BLUE_PAL #= (3<<10)
+!GRAY_PAL #= (4<<10)
+!REDYELLOW #= (5<<10)
+!TEXT_PAL #= (6<<10)
+!GREEN_PAL #= (7<<10)
+
+!VFLIP #= (1<<15)
+!HFLIP #= (1<<14)
+
+!P3 = $2000
+!SYNCED = char($10)|!BLUE_PAL
+!DESYNC = char($11)|!RED_PAL
+!HAMMER = char($12)|!BROWN_PAL
+
 pushpc
+org $008B7D
+	dw $240 ; make hud bigger, doesn't seem to cost any cycles
+
+org $0EFD3E
+	dw $6244, $6244 ; always draw the textbox low
+
 org $0DFAAE
 	JMP fire_hud_irq
 
@@ -32,9 +53,8 @@ fire_hud_irq:
 	LDA.b !ram_extra_sa1_required
 	BEQ .noextra
 
-	PHP
 	JSL Extra_SA1_Transfers
-	PLP
+	SEP #$30
 
 .noextra
 	LDA.b #$83 ; request a hud update from SA-1
@@ -68,39 +88,6 @@ ResetLanmoCycles:
 	STA.l $7FF81E, X
 	STZ.w SA1IRAM.LanmoCycles, X
 	RTL
-
-;==============================================================================
-; 
-;==============================================================================
-UpdateCounterLine:
-	LSR
-	BCC .nothing
-	LDA.b SA1IRAM.SCRATCH+8
-	ASL
-	SEP #$31
-
-	TAY
-	INC.b SA1IRAM.SCRATCH+8
-	CMP.b #$05*2
-	BCS .nothing
-
-	REP #$B3 ; reset N, Z, and C just for fun
-	LDX.w .line, Y
-
-	SEC
-	RTS
-
-.nothing
-	REP #$31
-	RTS
-
-.line
-	dw $0200 ; to write to nowhere useful
-	dw (0<<6)+$2E
-	dw (1<<6)+$2E
-	dw (2<<6)+$2E
-	dw (3<<6)+$2E
-	dw (4<<6)+$2E
 
 ;==============================================================================
 ; A = address
@@ -326,6 +313,7 @@ draw_hud_extras:
 	AND.w #$FF7F
 	STA.b SA1IRAM.TIMER_FLAG
 
+	; clean up these first
 	SEP #$10
 
 	LDA.w #$207F
@@ -340,94 +328,114 @@ draw_hud_extras:
 	DEX
 	BPL --
 
+	LDX.b #62
+--	STA.w SA1RAM.HUD+10+($40*5), X ; +10 to not erase magic ba
+	STA.w SA1RAM.HUD+($40*6), X
+	STA.w SA1RAM.HUD+($40*7), X
+	STA.w SA1RAM.HUD+($40*8), X
+	DEX
+	DEX
+	BPL --
+
 	LDA.w !ram_heart_display
 	ASL
 	TAX
 	JSR (draw_hearts_options, X)
 
+draw_hud_counters:
 	REP #$30
+	LDA.w #$002E ; start place
+	LDX.w #$0000
 
-.roomtime
-	LDA.w !ram_counters_real
-	JSR UpdateCounterLine
-	BCC ..skip
+.next_counter
+	PHA
+	PHX
 
-	LDY.w #!yellow ; color
-	LDA.w #SA1IRAM.ROOM_TIME_F_DISPLAY ; address
-	JSR Draw_all_two
-
-	DEX ; down 4
-	DEX
-	DEX
-	DEX
-	LDY.w #!white ; color
-	LDA.w #SA1IRAM.ROOM_TIME_S_DISPLAY ; address
-	JSR Draw_short_three
-
-..skip
-.lagtime
-	LDA.w !ram_counters_lag
-	JSR UpdateCounterLine
-	BCC ..skip
-
-	LDY.w #!red ; color
-	LDA.w #SA1IRAM.ROOM_TIME_LAG_DISPLAY ; address
-	JSR Draw_short_three
-
-..skip
-.idletime
-	LDA.w !ram_counters_idle
-	JSR UpdateCounterLine
-	BCC ..skip
-
-	LDY.w #!white
-	LDA.w #SA1IRAM.ROOM_TIME_IDLE_DISPLAY
-	JSR Draw_short_three
-
-..skip
-.segmenttime
-	LDA.w !ram_counters_segment
-	JSR UpdateCounterLine
-	BCC ..skip
-
-	LDY.w #!gray
-	LDA.w #SA1IRAM.SEG_TIME_F_DISPLAY
-	JSR Draw_all_two
-
-	DEX
-	DEX
-	DEX
-	DEX
-	LDY.w #!yellow
-	LDA.w #SA1IRAM.SEG_TIME_S_DISPLAY
-	JSR Draw_all_two
-
-	DEX
-	DEX
-	DEX
-	DEX
-	LDY.w #!white
-	LDA.w #SA1IRAM.SEG_TIME_M_DISPLAY
-	JSR Draw_short_three
-
-..skip
-.coordinates
-	LDA.w !ram_xy_toggle
-	BEQ ..skip
-
-	INC ; +2 for number of digits
-	INC
+	LDA.b SA1IRAM.CNTVAL1, X ; get counter value
 	PHA
 
-	LDA.w #$0001 ; if we're here, we are updating counter
-	JSR UpdateCounterLine
+	LDA.w !ram_counter1, X ; get counter type
+	ASL
+	TAY
+	LDA.w counters, Y ; get routine
+	TAY
 
+	LDA 5,S ; get write spot
+	TAX
+
+	PLA ; get value back
+
+	PEA.w ..return-1 ; return address
+
+	DEY ;our jump address
+	PHY
+
+	RTS ; call routine
+
+..return
+	REP #$31
+	PLX
+
+	PLA ; next row
+	ADC.w #$0040
+
+	INX ; next counter
+	INX
+	CPX.w #10
+	BCC .next_counter
+
+;===============================================================================
+draw_hud_linecounters:
+	REP #$30
+	LDA.w #5*64+10 ; start position
+	LDY.w #$0000
+
+	; later rows should be further left
+	; so push this for later rows
+	;PEA.w 5*64+4
+	PEA.w 5*64+10
+	BRA .start
+
+.next_counter
+	PHA
+
+.start
+	PHY
+
+	TAX ; get spot
+
+	LDA.w !ram_linecounter1, Y ; get counter type
+
+	ASL
+	TAY
+
+	LDA.w linecounters, Y ; get routine
+	DEC
+
+	PEA.w ..return-1 ; return address
+
+	PHA
+
+	LDA 5,S ; get value address position
+	ASL
+	ASL
+	ASL
+	TAY
+
+	RTS ; call routine
+
+..return
+	REP #$31
 	PLY
-	BCC ..skip
 
-	JSR DrawCoordinates
+	PLA ; next row
+	ADC.w #$0040
 
-..skip
+	INY ; next counter
+	INY
+	CPY.w #6
+	BCC .next_counter
+
 ;==============================================================================
 hud_draw_input_display:
 	LDA.w !ram_input_display
@@ -566,23 +574,7 @@ draw_timer:
 
 .skip
 ;==============================================================================
-extra_ram:
-	LDA.w !ram_extra_ram_watch : BEQ .nowatch
-	LDA #$0001
-	JSR UpdateCounterLine
-	BCC .nowatch
-
-	LDA.w !ram_extra_ram_watch : ASL : TAY
-	LDA.w extra_ram_watch_routines, Y
-	PEA.w .return-1 ; so we can RTS back
-	PHA ; push the location of the routine
-	RTS
-.return
-
-.nowatch
 done_extras:
-	JSR UpdateGlitchedWindow
-
 	PLB : PLP
 	RTL
 
@@ -911,53 +903,6 @@ hud_draw_input_display_options:
 	dw $28+8  ; X
 	dw $68+8  ; A
 
-extra_ram_watch_routines:
-	dw .nothing-1
-	dw .subpixels-1
-	dw .spooky-1
-	dw .arc-1
-	dw .icebreaker-1
-
-.nothing
-	RTS
-
-.icebreaker
-	LDA.b SA1IRAM.CopyOf_6C : AND #$00FF : BEQ ..nodoor
-	LDA.w #$216A : BRA ++
-
-..nodoor
-	LDA.w #!EMPTY
-
-++	STA.w SA1RAM.HUD+06, X
-
-.subpixels
-	LDA.w #!yellow
-	STA.b SA1IRAM.SCRATCH+10
-	LDY.w #2
-	LDA.b SA1IRAM.CopyOf_2A
-	JSR DrawHex
-
-	LDA.w #!white
-	STA.b SA1IRAM.SCRATCH+10
-	LDY.w #2
-	LDA.b SA1IRAM.CopyOf_2B
-	JMP DrawHex
-
-.spooky
-	LDA.w #!white
-	STA.b SA1IRAM.SCRATCH+10
-	LDY.w #2
-	LDA.b SA1IRAM.CopyOf_02A2
-	JMP DrawHex
-
-
-.arc
-	LDA.w #!white
-	STA.b SA1IRAM.SCRATCH+10
-	LDY.w #4
-	LDA.b SA1IRAM.CopyOf_0B08
-	JMP DrawHex
-
 ;==============================================================================
 
 DrawCoordinates:
@@ -965,21 +910,21 @@ DrawCoordinates:
 	LDA.w #!yellow
 	STA.b SA1IRAM.SCRATCH+10
 	LDA.b SA1IRAM.CopyOf_20
-	JSR .draw_n_digits
+	JSR DrawHex
 
 	PLY ; x coordinate after
 	LDA.w #!white
 	STA.b SA1IRAM.SCRATCH+10
 	LDA.b SA1IRAM.CopyOf_22
-	BRA .draw_n_digits
+	BRA DrawHex
 
-.next_digit
+DrawHex_next_digit:
 	LSR
 	LSR
 	LSR
 	LSR
 
-#DrawHex:
+DrawHex:
 .draw_n_digits
 	PHA ; remember coordinates
 	AND.w #$000F ; get digit
@@ -992,49 +937,660 @@ DrawCoordinates:
 	BNE .next_digit
 	RTS
 
-;==============================================================================
-; For cleaning up superwatch in VRAM
-;==============================================================================
-UpdateGlitchedWindow:
-	SEP #$30
-	LDA.w !ram_superwatch
-	AND.b #$03
-	ASL : TAX
-	JMP (.routines, X)
+.white
+	PHA
+	LDA.w #!white
+	BRA .start
 
-.routines
-	dw NoSuperWatch
-	dw UpdateAncillaWindow
-	dw UpdateUWWindow
-	dw NoSuperWatch
+.yellow
+	PHA
+	LDA.w #!yellow
+	BRA .start
 
-CleanVRAMSW:
-	PHD
-	PEA.w $2100
-	PLD
+.gray
+	PHA
+	LDA.w #!gray
+	BRA .start
 
-	LDA.b #$80
-	STA.b $2115
+.red
+	PHA
+	LDA.w #!red
+	BRA .start
 
-	REP #$30
-	LDA.w #$C200>>1
-	STA.b $2116
-	LDX.w #$0300
-	LDA.w #$207F
+.start
+	STA.b SA1IRAM.SCRATCH+10
+	PLA
+	BRA DrawHex
 
---	STA.b $2118
+
+DrawHEXForward:
+	PHA
+	BRA .start
+
+.white
+	PHA
+	LDA.w #!white
+	BRA .set_color
+
+.yellow
+	PHA
+	LDA.w #!yellow
+	BRA .set_color
+
+.gray
+	PHA
+	LDA.w #!gray
+	BRA .set_color
+
+.red
+	PHA
+	LDA.w #!red
+	BRA .set_color
+
+.set_color
+	STA.b SA1IRAM.SCRATCH+10
+
+.start
+	PHX ; save X
+	TYA ; get offset for Y
+	ASL
+	ADC 1,S ; get X offset
+
+	PLX ; kill the X we pushed
+	SEC
+	SBC.w #16 ; to account for DrawHEX offset
+	TAX ; after our last digit
+	PLA ; get val back
+
+	PHX ; save new position
+	JSR DrawHex
+
+	PLA
+	CLC
+	ADC.w #16
+	TAX
+
+	RTS
+
+DrawHEX2ForwardSaveY:
+	PHY
+	LDY.w #2
+	JSR DrawHEXForward
+	PLY
+	RTS
+
+.white
+	PHY
+	LDY.w #2
+	JSR DrawHEXForward_white
+	PLY
+	RTS
+
+.yellow
+	PHY
+	LDY.w #2
+	JSR DrawHEXForward_yellow
+	PLY
+	RTS
+
+.red
+	PHY
+	LDY.w #2
+	JSR DrawHEXForward_red
+	PLY
+	RTS
+
+.gray
+	PHY
+	LDY.w #2
+	JSR DrawHEXForward_gray
+	PLY
+	RTS
+
+DrawHEX4ForwardSaveY:
+	PHY
+	LDY.w #4
+	JSR DrawHEXForward
+	PLY
+	RTS
+
+.white
+	PHY
+	LDY.w #4
+	JSR DrawHEXForward_white
+	PLY
+	RTS
+
+.yellow
+	PHY
+	LDY.w #4
+	JSR DrawHEXForward_yellow
+	PLY
+	RTS
+
+.red
+	PHY
+	LDY.w #4
+	JSR DrawHEXForward_red
+	PLY
+	RTS
+
+.gray
+	PHY
+	LDY.w #4
+	JSR DrawHEXForward_gray
+	PLY
+	RTS
+
+;===============================================================================
+; Various counters
+;===============================================================================
+counters:
+	dw counter_nothing
+	dw counter_room
+	dw counter_lag
+	dw counter_idle
+	dw counter_segment
+	dw counter_coords
+	dw counter_subpixels
+	dw counter_roomid
+	dw counter_quadrant
+	dw counter_tile
+	dw counter_spooky
+	dw counter_arcvar
+	dw counter_index
+	dw counter_pit
+
+counter_nothing:
+	RTS
+
+counter_room:
+	LDY.w #!yellow ; color
+	LDA.w #SA1IRAM.ROOM_TIME_F_DISPLAY ; address
+	JSR Draw_all_two
+
+	DEX ; down 4
 	DEX
-	BNE --
-
-	PLD
-	RTL
-
-ClearSWBuffer:
-	REP #$30
-	LDA.w #$207F
-	LDX.w #$013C
---	STA.w SA1RAM.SW_BUFFER, X
 	DEX
 	DEX
-	BPL --
-	RTL
+	LDY.w #!white ; color
+	LDA.w #SA1IRAM.ROOM_TIME_S_DISPLAY ; address
+	JMP Draw_short_three
+
+counter_lag:
+	LDY.w #!red ; color
+	LDA.w #SA1IRAM.ROOM_TIME_LAG_DISPLAY ; address
+	JMP Draw_short_three
+
+counter_idle:
+	LDY.w #!white
+	LDA.w #SA1IRAM.ROOM_TIME_IDLE_DISPLAY
+	JMP Draw_short_three
+
+counter_segment:
+	LDY.w #!gray
+	LDA.w #SA1IRAM.SEG_TIME_F_DISPLAY
+	JSR Draw_all_two
+
+	DEX
+	DEX
+	DEX
+	DEX
+	LDY.w #!yellow
+	LDA.w #SA1IRAM.SEG_TIME_S_DISPLAY
+	JSR Draw_all_two
+
+	DEX
+	DEX
+	DEX
+	DEX
+	LDY.w #!white
+	LDA.w #SA1IRAM.SEG_TIME_M_DISPLAY
+	JMP Draw_short_three
+
+counter_coords3:
+	LDY.w #3
+	JMP DrawCoordinates
+
+counter_coords:
+counter_coords4:
+	LDY.w #4
+	JMP DrawCoordinates
+
+
+counter_subpixels:
+	PHA
+	AND.w #$00FF
+	LDY.w #2
+	JSR DrawHex_yellow
+
+	PLA
+	XBA
+	AND.w #$00FF
+	LDY.w #2
+	JSR DrawHex_white
+
+	LDA.b SA1IRAM.CopyOf_6C : AND #$00FF : BEQ .nodoor
+	LDA.w #$216A : BRA .drawdoor
+
+.nodoor
+	LDA.w #!EMPTY
+
+.drawdoor
+	STA.w SA1RAM.HUD+14, X
+	RTS
+
+
+counter_roomid:
+	; calculate correct room id first
+	LDA.b SA1IRAM.CopyOf_21 : AND.w #$00FE
+	ASL : ASL : ASL
+	STA.b SA1IRAM.SCRATCH+14
+
+	LDA.b SA1IRAM.CopyOf_23 : AND #$00FE : LSR ; bit 0 is off, so it clears carry
+	ADC.b SA1IRAM.SCRATCH+14 : STA.b SA1IRAM.SCRATCH+14
+
+	CMP.b SA1IRAM.CopyOf_A0
+	BNE .desync
+
+.sync
+	PEA.w !SYNCED
+	LDA.w #!gray
+	BRA .draw
+
+.desync
+	PEA.w !DESYNC
+	LDA.w #!red
+
+.draw
+	STA.b SA1IRAM.SCRATCH+10
+
+	LDA.b SA1IRAM.SCRATCH+14
+	LDY.w #3
+	JSR DrawHex
+
+	PLA
+	STA.w SA1RAM.HUD+14, X
+	DEX
+	DEX
+
+	LDY.w #3
+	LDA.b SA1IRAM.CopyOf_A0
+	JMP DrawHex_white
+
+counter_quadrant:
+	LSR
+	BCS .east
+	; $AA is 0 or 2, and will be the only bit remaining, no matter what
+
+.west
+	BEQ .northwest
+
+.southwest
+	LDY.w #2
+	LDA.w #char(5+2)|!RED_PAL
+	BRA .doQuadrant
+
+.northwest
+	LDY.w #3
+	LDA.w #char(5+3)|!RED_PAL
+	BRA .doQuadrant
+
+.east
+	BEQ .northeast
+
+.southeast
+	LDY.w #1
+	LDA.w #char(5+1)|!RED_PAL
+	BRA .doQuadrant
+
+.northeast
+	LDY.w #0
+	LDA.w #char(5+0)|!RED_PAL
+
+.doQuadrant
+	STY.b SA1IRAM.SCRATCH+14
+
+	STA.w SA1RAM.HUD+10, X
+
+.calc_correct_quadrant
+	LDA.w #$0100 ; checking the same bit on both coordinates
+
+	BIT.b SA1IRAM.CopyOf_22 : BNE ..east
+
+..west
+	BIT.b SA1IRAM.CopyOf_20 : BEQ ..northwest
+
+	; using the gray pal means we only need to ORA if desynched
+	; and can leave it alone otherwise
+..southwest
+	LDY.w #2
+	LDA.w #char(5+2)|!GRAY_PAL
+	BRA .drawQuadrant
+
+..northwest
+	LDY.w #3
+	LDA.w #char(5+3)|!GRAY_PAL
+	BRA .drawQuadrant
+
+..east
+	BIT.b SA1IRAM.CopyOf_20 : BEQ ..northeast
+
+..southeast
+	LDY.w #1
+	LDA.w #char(5+1)|!GRAY_PAL
+	BRA .drawQuadrant
+
+..northeast
+	LDY.w #0
+	LDA.w #char(5+0)|!GRAY_PAL
+
+.drawQuadrant
+	CPY.b SA1IRAM.SCRATCH+14
+	BEQ .sync
+
+.desync
+	ORA.w #!TEXT_PAL
+	STA.w SA1RAM.HUD+14, X
+
+	LDA.w #!DESYNC
+	BRA .drawSync
+
+.sync
+	STA.w SA1RAM.HUD+14, X
+	LDA.w #!SYNCED
+
+.drawSync
+	STA.w SA1RAM.HUD+12, X
+	RTS
+
+counter_index:
+counter_spooky:
+counter_tile:
+	AND.w #$00FF
+	LDY.w #2
+	JMP DrawHex_white
+
+counter_arcvar:
+	LDY.w #4
+	JMP DrawHex_white
+
+counter_pit:
+	AND.w #$00FF
+	LDY.w #2
+	JSR DrawHex_white
+
+	PHX
+	LDX.b SA1IRAM.CopyOf_A0
+	LDA.l RoomHasPitDamage, X
+	PLX
+
+	LSR
+	BCS .pitdamage
+
+.warphole
+	LDA.w #char($16)|!GRAY_PAL
+	BRA .drawflag
+
+.pitdamage
+	LDA.w #char($16)|!YELLOW_PAL
+
+.drawflag
+	STA.w SA1RAM.HUD+14, X
+	RTS
+
+;===============================================================================
+; full line counters
+;===============================================================================
+linecounters:
+	dw linecounter_nothing
+	dw linecounter_roomdata
+	dw linecounter_camerax
+	dw linecounter_cameray
+	dw linecounter_ancilla04
+	dw linecounter_ancilla59
+	dw linecounter_ancillaIX
+	dw linecounter_nothing
+	dw linecounter_nothing
+
+;===============================================================================
+linecounter_nothing:
+	RTS
+
+;===============================================================================
+linecounter_roomdata:
+	; make room data
+	; do calculate the same as in bank02
+	LDA.w SA1IRAM.LINEVAL+1, Y
+	LSR
+	LSR
+	LSR
+	LSR
+	STA.b SA1IRAM.SCRATCH+14
+
+	LDA.w SA1IRAM.LINEVAL-1, Y : AND.w #$F000
+	ORA.w SA1IRAM.LINEVAL+3, Y
+	STA.b SA1IRAM.SCRATCH+14
+
+	; rearrange it into the order we want
+	; Start: dddd hkcc cccc qqqq
+	; End:   hkcc cccc dddd qqqq
+	AND.b #$000F ; quadrants
+	STA.b SA1IRAM.SCRATCH+10
+
+	LDA.b SA1IRAM.SCRATCH+14 ; boss and chests
+	AND.w #$0FF0
+	ASL
+	ASL
+	ASL
+	ASL
+	TSB.b SA1IRAM.SCRATCH+10
+
+	LDA.b SA1IRAM.SCRATCH+14
+	AND.w #$F000
+	XBA
+	TSB.b SA1IRAM.SCRATCH+10
+
+	LDA.w #char($19)|!RED_PAL : STA.w SA1RAM.HUD, X ; flag symbol
+
+	LDY.w #0
+
+.next_flag
+	INX
+	INX
+	LDA.w .char, Y
+	ASL.b SA1IRAM.SCRATCH+10
+	BCS .on
+
+.off
+	ORA.w #!GRAY_PAL
+	BRA .drawit
+
+.on
+	ORA.w .pal, Y
+
+.drawit
+	STA.w SA1RAM.HUD, X
+	INY
+	INY
+	CPY.w #32
+	BCC .next_flag
+
+	RTS
+
+!CHEST_TILE = char($15)
+!QUAD = char($14)
+!DOOR_TILE = char($1A)
+
+.char
+	dw $20A0 ; heart
+	dw $2071 ; key
+	dw $2071 ; key
+	dw !CHEST_TILE, !CHEST_TILE, !CHEST_TILE, !CHEST_TILE, !CHEST_TILE
+	dw !DOOR_TILE, !DOOR_TILE, !DOOR_TILE, !DOOR_TILE
+	dw !QUAD|!HFLIP, !QUAD, !QUAD|!HFLIP|!VFLIP, !QUAD|!VFLIP
+
+.pal
+	dw !RED_PAL, !YELLOW_PAL, !YELLOW_PAL
+	dw !RED_PAL, !RED_PAL, !RED_PAL, !RED_PAL, !RED_PAL
+	dw !BROWN_PAL, !BROWN_PAL, !BROWN_PAL, !BROWN_PAL
+	dw !BLUE_PAL, !RED_PAL, !GREEN_PAL, !YELLOW_PAL
+
+;===============================================================================
+linecounter_camerax:
+	LDA.w #char(9)
+	PEA.w !white
+	BRA ++
+
+linecounter_cameray:
+	LDA.w #char(11)
+	PEA.w !yellow
+
+++	STA.b SA1IRAM.SCRATCH+14 ; save the icon
+
+	PLA
+	STA.b SA1IRAM.SCRATCH+10
+	STA.b SA1IRAM.SCRATCH+12
+
+
+	LDA.w #char($13)|!GRAY_PAL ; camera icon
+	STA.w SA1RAM.HUD, X
+	INX
+	INX
+
+	LDA.w SA1IRAM.LINEVAL+1, Y : JSR DrawHEX4ForwardSaveY
+	PHX ; save X for sync icon
+	INX
+	INX
+
+	; check which set to use
+	LDA.w SA1IRAM.LINEVAL+0, Y
+	BIT.w #$0002
+	BNE .set2
+
+	; +3 and +5 which are done first should be color of axis
+.set1
+	PEA.w 3 ; look at 3 and 5 for camera sync
+	LDA.b SA1IRAM.SCRATCH+12 
+	PEA.w !gray ; other set is gray
+	BRA .draw
+
+.set2
+	PEA.w 7 ; look at 7 and 9 for camera sync
+	PEI.b (SA1IRAM.SCRATCH+12) ; +3 and +5 should have gray
+	LDA.w #!gray 
+
+.draw
+	STA.b SA1IRAM.SCRATCH+10 ; set 1 color
+	PLA
+	STA.b SA1IRAM.SCRATCH+12 ; save set 2 color to here (don't need axis color anymore)
+
+	LDA.w SA1IRAM.LINEVAL+1, Y ; save camera position
+	PHA
+
+	INY ; so we start at the +3
+	JSR .draw1 ; draw first 2 camera values
+
+	INC.b SA1IRAM.SCRATCH+14
+	JSR .draw1
+
+	LDA.b SA1IRAM.SCRATCH+12
+	STA.b SA1IRAM.SCRATCH+10
+
+	DEC.b SA1IRAM.SCRATCH+14
+	JSR .draw1 ; draw first next 2 camera values
+
+	INC.b SA1IRAM.SCRATCH+14
+	JSR .draw1
+
+	PLA ; get camera position
+	PLY ; which set to compare against
+	PLX ; get HUD position of sync icon
+
+	CMP.w SA1IRAM.LINEVAL+0, Y
+	BCC .desync
+	DEC
+	CMP.w SA1IRAM.LINEVAL+2, Y
+	BCS .desync
+
+.sync
+	LDA.w #!SYNCED
+	BRA .drawsync
+
+.desync
+	LDA.w #!DESYNC
+
+.drawsync
+	STA.w SA1RAM.HUD, X
+	RTS
+
+.draw1
+	INY
+	INY
+	LDA.b SA1IRAM.SCRATCH+10
+	ORA.b SA1IRAM.SCRATCH+14
+	STA.w SA1RAM.HUD, X
+	INX
+	INX
+
+	LDA.w SA1IRAM.LINEVAL, Y
+	JMP DrawHEX4ForwardSaveY
+
+;===============================================================================
+
+linecounter_ancilla04:
+linecounter_ancilla59:
+linecounter_ancillaIX:
+	LDA.w #5
+	STA.b SA1IRAM.SCRATCH+14
+	LDA.w SA1IRAM.LINEVAL+12, Y
+	CMP.w #$03C4
+	BEQ linecounter_ancilla_id
+
+.next_ancilla
+	INX
+	INX
+
+	LDA.w SA1IRAM.LINEVAL, Y
+	JSR DrawHEX2ForwardSaveY_white
+
+.continue
+	INY
+	INY
+	DEC.b SA1IRAM.SCRATCH+14
+	BNE .next_ancilla
+	RTS
+
+linecounter_ancilla_id:
+.next_ancilla
+	INX
+	INX
+
+	LDA.w SA1IRAM.LINEVAL, Y
+	AND.w #$00FF : BEQ .zero
+
+	CMP.w #$0A : BCC .normal
+	BEQ .replace
+
+	CMP.w #$3C : BEQ .replace
+	BCS .normal
+
+	CMP.w #$13 : BNE .normal
+
+.replace
+	JSR DrawHEX2ForwardSaveY_red
+	BRA .continue
+
+.zero
+	JSR DrawHEX2ForwardSaveY_gray
+	BRA .continue
+
+.normal
+	JSR DrawHEX2ForwardSaveY_white
+
+.continue
+	INY
+	INY
+	DEC.b SA1IRAM.SCRATCH+14
+	BNE .next_ancilla
+	RTS

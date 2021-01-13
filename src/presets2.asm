@@ -209,36 +209,38 @@ preset_load:
 
 	LDX.b #$80 : STX.b $2100
 
-	LDA.w #ZeroLand+1 : STA.w $4302
-	LDX.b #ZeroLand>>16 : STX.w $4304
-	LDA.w #$8008 : STA.w $4300
+	LDA.w #ZeroLand+1 : STA.w $4352
+	LDX.b #ZeroLand>>16 : STX.w $4354
+	LDA.w #$8008 : STA.w $4350
 
 	LDY.b #$01
 	STY.b $2183 ; bank 7F to start
 
+	LDY.b #$20
+
 	; clear some sprite stuff
 	LDA.w #$F800 : STA.b $2181
-	LDA.w #$0020 : STA.w $4305
+	LDA.w #$0020 : STA.w $4355
 	STY.w $420B
 
 	LDA.w #$DF80 : STA.b $2181
-	LDA.w #$1200 : STA.w $4305
+	LDA.w #$1200 : STA.w $4355
 	STY.w $420B
 
 	; clear tile map
 	LDA.w #$2000 : STA.b $2181
-	STA.w $4305 ; happens to be number of bytes to write too
+	STA.w $4355 ; happens to be number of bytes to write too
 	STY.w $420B
 
 	STZ.b $2182 ; bank 7E now
 
 	; clear sram mirror
 	LDA.w #$F000 : STA.b $2181
-	LDA.w #$0500 : STA.w $4305
+	LDA.w #$0500 : STA.w $4355
 	STY.w $420B
 
 	; clear some wram
-	STA.w $4305 ; 0x500 bytes again, for wram
+	STA.w $4355 ; 0x500 bytes again, for wram
 	LDA.w #$0B00 : STA.b $2181
 	STY.w $420B
 
@@ -405,7 +407,7 @@ preset_load:
 	BCS .draw_item
 
 .no_item
-	LDX.w #$FEE7
+	LDX.w #$FEE7 ; value happens to have $207F x4
 
 .draw_item
 	LDA.l $0D0000, X : STA.w SA1RAM.HUD+$04A
@@ -442,12 +444,30 @@ preset_load:
 	CMP.w #presetmenu_nmg_aga_after_lost_woods
 	BCC .noitembonus
 
+	SEP #$10
+	LDX.w !ram_nmg_powder
+
+	; if nothing or shroom, just add it in as is
+	CPX.b #$02 : BCC .set_powder
+
+	LDX.b #$01 ; to set to shroom
+
+	; If we should have powder, we should have it after lottery
+	CMP.w #presetmenu_nmg_ice_medallion
+	BCC .set_powder
+
+	INX ; 2 for powder
+
+.set_powder
 	SEP #$20
-	LDA.w !ram_nmg_powder
+	TXA
 	STA.l $7EF344
-	REP #$20
+	REP #$30
 
 .noitembonus
+
+
+
 .notNMG
 
 
@@ -862,9 +882,10 @@ presetload_dungeon:
 	; Dungeon ID
 	LDA.b [SA1IRAM.preset_addr], Y : INY : STA.w $040C
 
-	; Layer
+	; Door
 	LDA.b [SA1IRAM.preset_addr], Y : INY : STA.w $006C
 
+	; Layer
 	LDA.b [SA1IRAM.preset_addr], Y : INY : STA.w $00EE
 	AND.b #$0F : STA.w $0476
 

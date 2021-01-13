@@ -34,16 +34,7 @@ struct SA1RAM $406000
 	.SNES_NMI_VECTOR: skip 4
 	.SNES_NMI_args: skip 8
 
-	.SW_BUFFER:
-	.SW_BUFFER_r0: skip 64
-	.SW_BUFFER_r1: skip 64
-	.SW_BUFFER_r2: skip 64
-	.SW_BUFFER_r3: skip 64
-	.SW_BUFFER_r4: skip 64
-	.SW_BUFFER_r5: skip 64
-
 	; stuff for various RAM
-
 
 	.hex2dec_tmp: skip 2
 	.hex2dec_first_digit: skip 2
@@ -79,6 +70,8 @@ struct SA1RAM $406000
 
 	.CM_SubMenuIndex: skip 2
 	.CM_SubMenuStack: skip 40
+
+	.loadroomid: skip 2
 
 	.disabled_layers: skip 2
 .end_of_clearable_sa1ram:
@@ -189,15 +182,24 @@ endmacro
 %def_perm_sram("heart_display", 0)
 %def_perm_sram("feature_music", !ON)
 
-%def_perm_sram("counters_real", !ON)
-%def_perm_sram("counters_lag", !ON)
-%def_perm_sram("counters_idle", !ON)
-%def_perm_sram("counters_segment", !OFF)
+%def_perm_sram("counter1", 1) ; room time
+%def_perm_sram("counter2", 2) ; lag time
+%def_perm_sram("counter3", 3) ; idle time
+%def_perm_sram("counter4", !OFF)
+%def_perm_sram("counter5", 5) ; coords
+
+%def_perm_sram("linecounter1", !OFF)
+%def_perm_sram("linecounter2", !OFF)
+%def_perm_sram("linecounter3", !OFF)
+%def_perm_sram("linecounter4", !OFF)
+
+%def_perm_sram("ancprop1", 0)
+%def_perm_sram("ancprop2", 0)
+%def_perm_sram("ancprop3", 0)
+%def_perm_sram("ancprop4", 0)
 
 %def_perm_sram("qw_toggle", !ON)
-%def_perm_sram("xy_toggle", !ON)
 %def_perm_sram("heartlag_spinner", !OFF)
-%def_perm_sram("extra_ram_watch", !OFF)
 
 %def_perm_sram("enemy_hp_toggle", !OFF)
 %def_perm_sram("lit_rooms_toggle", !OFF)

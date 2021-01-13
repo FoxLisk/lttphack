@@ -17,33 +17,30 @@ org $00841E
 	STA.w $2200
 
 	REP #$10
-	LDX.w $4300 : PHX
 
+	; TODO recalc
 	; 246,16 : 250,18
 	; Vanilla OAM cycles: 4 scanlines - 10 H
 	; improved to: 2 scanlines + 28H
 
+	;set up
+	LDA.b #OAM_Cleaner>>16 : STA.w $4354
+	LDX.w #$8001 : STX.w $4350
+
+	LDA.b #$20
+
 	; first half
-	LDX.w #$8001 : STX.w $4300
-
-	LDA.b #OAM_Cleaner>>16 : STA.w $4304
-	TXA ; give A 0x01
-
+	LDX.w #OAM_Cleaner : STX.w $4352
 	LDX.w #$0801 : STX.w $2181 : STZ.w $2183
-
-	LDX.w #OAM_Cleaner : STX.w $4302
-	LDX.w #$0080 : STX.w $4305
+	LDX.w #$0080
+	STX.w $4355
 	STA.w $420B
 
 	; second half
-	LDX.w #OAM_Cleaner : STX.w $4302
+	STX.w $4355
 	LDX.w #$0901 : STX.w $2181
-	LDX.w #$0080 : STX.w $4305
-
+	LDX.w #OAM_Cleaner : STX.w $4352
 	STA.w $420B
-
-	PLX
-	STX.w $4300
 
 	SEP #$30
 
@@ -83,10 +80,6 @@ org $083D1
 
 warnpc $0083F8
 
-
-
-
-
 ; NMI hook
 org $0080D5
 	; 0080D1 LDA #$0000
@@ -97,18 +90,12 @@ org $0080D5
 	JSL nmi_expand
 
 org $008174
-	LDA.b $1C : STA.w SA1RAM.LayerCache+0 ; 16-bit addressing to save 1 cycle by avoiding a NOP
+	LDA.b $1C : STA.w SA1RAM.LayerCache+0
 	LDA.b $1D : STA.w SA1RAM.LayerCache+1
 
 ;org $0081A0 ; save camera correction for NMI expansion
 ;	BRA + ; save time during NMI
 ;org $0081B8 : +
-
-; HUD update hook
-;org $008220
-org $00821B
-	JSL nmi_hud_update
-	ORA.w $009B ; 16-bit addressing to save 1 cycle by avoiding a NOP
 
 warnpc $0089DF
 
@@ -135,109 +122,14 @@ nmi_expand:
 
 	REP #$20
 	TRB.w SA1RAM.LayerCache
-	LDA.w SA1RAM.LayerCache : STA $212C
+	LDA.w SA1RAM.LayerCache : STA.w $212C
 
 	SEP #$30
 	LDA.b $12 : STA.w SA1IRAM.CopyOf_12
 
-	LDA #$12 ; timers NMI
+	LDA.b #$12 ; timers NMI
 	STA.w $2200
 	RTL
-
-nmi_hud_update:
-	; Movie stuff commented out while it's not needed
-;	LDX #$6360 : STX $2116
-
-;	; $7EC700 is the WRAM buffer for this data
-;	LDX.w #!ram_movie_hud : STX $4302
-;	LDA.b #!ram_movie_hud>>16 : STA $4304
-;	LDX #$0040 : STX $4305 ; number of bytes to transfer is 330
-;	LDA #$01 : STA $420B ; refresh BG3 tilemap data with this transfer on channel 0
-	REP #$20
-	SEP #$10
-
-	LDX.w SA1IRAM.CopyOf_12 : BNE .dontbreakthings
-	LDA.w !ram_superwatch
-	AND #$0003
-	ASL
-	TAX
-	JMP (.routines, X)
-
-.doorwatch
-	LDX #$80 : STX $2115
-	LDA #$6500 : STA $2116
-
-	LDA #$1801 : STA $4300
-	LDA.w #SA1RAM.SW_BUFFER : STA $4302
-	LDX.b #SA1RAM.SW_BUFFER>>16 : STX $4304
-	LDA #$0100 : STA $4305
-
-	LDY #$01 : STY $420B
-
-.nowatch
-.dontbreakthings
-	LDX.b $13
-	STX.w $2100
-	SEP #$20
-	LDA.w SA1IRAM.HDMA_ASK
-	STZ.w SA1IRAM.HDMA_ASK
-	RTL
-
-.ancillawatch
-	LDX $10
-	CPX #$06 : BCC .nowatch
-	CPX #$19 : BCS .nowatch
-	CPX #$12 : BEQ .nowatch
-	CPX #$14 : BEQ .nowatch
-
-	LDX #$80 : STX $2115
-	LDY #$01
-	LDA #$1801 : STA $4300
-	LDA.w #SA1RAM.SW_BUFFER : STA $4302
-	LDX.b #$00 : STX $4304
-
-	LDA #$C202>>1 : STA $2116
-	LDA #$0010 : STA $4305
-	STY $420B
-
-macro draw_ancilla_row(n)
-	LDA.w #($C202+(64*<n>))>>1 : STA.w $2116
-	LDA.w #$0010 : STA.w $4305
-	STY $420B
-
-	;LDA #($C22E+(64*<n>))>>1 : STA $2116
-	;LDA #$0010 : STA $4305
-	;STY $420B
-endmacro
-
-	;%draw_ancilla_row(1)
-	%draw_ancilla_row(2)
-	%draw_ancilla_row(3)
-	%draw_ancilla_row(4)
-	%draw_ancilla_row(5)
-	%draw_ancilla_row(6)
-	;%draw_ancilla_row(7)
-	%draw_ancilla_row(8)
-	%draw_ancilla_row(9)
-	%draw_ancilla_row(10)
-	%draw_ancilla_row(11)
-	%draw_ancilla_row(12)
-	;%draw_ancilla_row(13)
-	;%draw_ancilla_row(14)
-	;%draw_ancilla_row(15)
-	;%draw_ancilla_row(16)
-	;%draw_ancilla_row(17)
-	;%draw_ancilla_row(18)
-	;%draw_ancilla_row(19)
-	;%draw_ancilla_row(20)
-
-	JMP .nowatch
-
-.routines
-	dw .nowatch
-	dw .ancillawatch
-	dw .doorwatch
-	dw .nowatch
 
 ;===========================================
 ; OAM cleaner optimization

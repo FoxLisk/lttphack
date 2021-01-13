@@ -56,11 +56,12 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 	</li>
 	<li>Gameplay:
 		<ul>
-			<li>Added NMG powder/shroom add in</li>
+			<li>Added NMG preset powder/shroom toggles</li>
 		</ul>
 	</li>
 	<li>Game state:
 		<ul>
+			<li>Room loading</li>
 			<li>Follower option</li>
 			<li>Removed crystal switch color in lieu of the shortcut.</li>
 		</ul>
@@ -69,8 +70,7 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 		<ul>
 			<li>Vanilla hearts for those who want it for whatever reason. I don't understand you guys, honestly. But, if you want it, this is where it is now.</li>
 			<li>Added "Classic Gray" input display</li>
-			<li>Support for 4 digit coordinates.</li>
-			<li>Replaced overlay corruption with wrong warp stuff in UW Glitches superwatch.</li>
+			<li>Condensed the timers and ram watches into a single system.</li>
 		</ul>
 	</li>
 	<li>Shortcuts:
@@ -293,10 +293,10 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 	<dd>Feature toggles related to gameplay</dd>
 	<dt><a href="#menuRNGControl">RNG control</a></dt>
 	<dd>Fix specific RNG calls to specific values</dd>
-	<dt><a href="#menuShortcuts">Shortcuts</a></dt>
-	<dd>Modify shortcuts for quick feature access</dd>
 	<dt><a href="#menuHUD">HUD extras</a></dt>
 	<dd>Toggle features that appear on the HUD</dd>
+	<dt><a href="#menuShortcuts">Shortcuts</a></dt>
+	<dd>Modify shortcuts for quick feature access</dd>
 	<dt><a href="#menuConfiguration">Configuration</a></dt>
 	<dd>Configuration toggles related to meta-operation</dd>
 </dl>
@@ -477,6 +477,8 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 		</ul>
 		<strong class="lag"><b>NOTE:</b> This only affects the data pertaining to that specific room, but not data pertaining to the dungeon as a whole. For example, even though key collection is reset, the key count for that dungeon is left unaltered.</strong>
 	</dd>
+	<dt>Load room</dt>
+	<dd>Loads selected EG1 room ID.</dd>
 	<dt>Reset dungeons</dt>
 	<dd>Resets every room associated with a specific dungeon (including all non-dungeon rooms as a single group) with the same caveats and restrictions as Reset current room.</dd>
 	<dt>Toggle bosses defeated</dt>
@@ -746,6 +748,106 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 <div class="center">
 	<img src="vitreouseyes.png"width="288">
 </div>
+
+<h3 id="menuHUD">HUD extras</h3>
+<dl>
+	<dt>Health display<sup class="badge sa1-badge">SA1</sup></dt>
+	<dd>How to show Link's current and max health:
+		<dl class="subDefinition">
+			<dt>Numerical</dt>
+			<dd>Classic practice hack display under rupee counter</dd>
+			<dt>Vanilla</dt>
+			<dd>Vanilla graphical display <strong class="lag"><b>NOTICE:</b> vanilla hearts will be drawn to the HUD first, and additional HUD features may be drawn over them.</strong></dd>
+		</dl>
+	</dd>
+	<dt>Input display<sup class="badge sa1-badge">SA1</sup></dt>
+	<dd>Visual indication of every button registered each frame.
+		<dl class="subDefinition">
+			<dt>Off</dt>
+			<dd>Disabled.</dd>
+			<dt>Graphical</dt>
+			<dd>Rectangle buttons arranged like a controller.</dd>
+			<dt>Classic</dt>
+			<dd>Original character display.</dd>
+			<dt>Classic Gray</dt>
+			<dd>Classic with unpressed buttons in gray.</dd>
+		</dl>
+	</dd>
+	<dt>Counter 1<sup class="badge sa1-badge">SA1</sup></dt>
+	<dt>Counter 2<sup class="badge sa1-badge">SA1</sup></dt>
+	<dt>Counter 3<sup class="badge sa1-badge">SA1</sup></dt>
+	<dt>Counter 4<sup class="badge sa1-badge">SA1</sup></dt>
+	<dt>Counter 5<sup class="badge sa1-badge">SA1</sup></dt>
+	<dd>5 counter slots displayed on the HUD.
+		<dl class="subDefinition">
+			<dt>Room time</dt>
+			<dd>Time spent on the current screen, starting from the beginning of the last transition.</dd>
+			<dt>Lag counter</dt>
+			<dd>Count of lag frames on the current screen, starting from the beginning of the last transition.</dd>
+			<dt>Heart lag</dt>
+			<dd>Animated spinning square that indicates there is heart lag present.</dd>
+			<dt>Idle frames</dt>
+			<dd>Count of frames with no relevant input, starting from the beginning of the last transition.</dd>
+			<dt>Segment time</dt>
+			<dd>Time spent since the beginning of the last segment timer reset.</dd>
+			<dt>Coordinates</dt>
+			<dd>Absolute position of Link (X,Y)</dd>
+			<dt>Subpixels</dt>
+			<dd>Current subpixel remainder (Hexadecimal). Includes door marker for icebreaker, etc.</dd>
+			<dt>Room ID</dt>
+			<dd>Current room ID, corrected room ID (based on coordinates), and sync.</dd>
+			<dt>Quadrant</dt>
+			<dd>Current quadrant, corrected quadrant (based on coordinates), and sync.</dd>
+			<dt>Spooky</dt>
+			<dd>Ancilla height for slot 4</dd>
+			<dt>Arc variable</dt>
+			<dd>Overlord value used by Armos Knights and Ganon for circles.</dd>
+			<dt>Anc index</dt>
+			<dd>Ancilla overload starting index</dd>
+			<dt>Pits</dt>
+			<dd>Current pit destination/damage flag</dd>
+		</dl>
+	</dd>
+
+	<dt>Line counter 1<sup class="badge lag-badge">LAG</sup></dt>
+	<dt>Line counter 2<sup class="badge lag-badge">LAG</sup></dt>
+	<dt>Line counter 3<sup class="badge lag-badge">LAG</sup></dt>
+	<dd>3 larger slots displayed on the HUD.
+		<dl class="subDefinition">
+			<dt>Room flags</dt>
+			<dd>Boss heart, key, chest, and door floogs for current room.</dd>
+			<dt>Camera X</dt>
+			<dd>Camera scroll and boundaries for X-axis.</dd>
+			<dt>Camera Y</dt>
+			<dd>Camera scroll and boundaries for Y-axis.</dd>
+			<dt>Ancilla 0-4</dt>
+			<dd>Custom ancilla property for slots 0&ndash;4 (property # corresponds to counter #)</dd>
+			<dt>Ancilla 5-9</dt>
+			<dd>Custom ancilla property for slots 5&ndash;9</dd>
+			<dt>Ancilla IXd</dt>
+			<dd>Custom ancilla property for the 5 slots preceding the current research index ($03C4)</dd>
+		</dl>
+	</dd>
+	<dt>Ancilla Prop 1<dt>
+	<dt>Ancilla Prop 2<dt>
+	<dt>Ancilla Prop 3<dt>
+	<dd>Custom property for ancillae corresponding to counter #
+		<dl class="subDefinition">
+			<dt>ID</dt>
+			<dd>Ancilla ID from $03C4,X (includes
+	</dd>
+	<dt>QW indicator<sup class="badge sa1-badge">SA1</sup></dt>
+	<dd>Displays an icon on the HUD when the current camera will produce a quickwarp.</dd>
+	<dt>Lanmola cycs<sup class="badge sa1-badge">SA1</sup></dt>
+	<dd>Displays a counter for the cycle count of the three Lanmolas individually.</dd>
+<!----
+	<dt>Lagometer</dt>
+	<dd>Shows a rough calculation of the amount of lag a frame has. The more the bar is filled, the closer a frame was to producing a lag frame. Lag from one frame does not affect the next, but trends in the lagometer can be used to gauge how laggy an area is.</dd>
+	<dt>Enemy HP</dt>
+	<dd>Shows the exact health of a single enemy. Attempts to find the most relevant enemy as you play. <strong class="lag"><b>WARNING:</b> this feature can be laggy.</strong></dd>
+---->
+</dl>
+
 <h3 id="menuShortcuts">Shortcuts</h3>
 <dl>
 	<dt>LTTPHack menu</dt>
@@ -772,85 +874,6 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 	<dd>Attempts to fix important graphics registers and VRAM data that have been corrupted by door glitches.<strong class="lag"><b>WARNING:</b> If this shortcut is triggered during a text box, the text box will disappear, but the game will remain in text mode.</strong><strong class="lag"><b>WARNING:</b> this feature only repairs registers and VRAM; other areas of RAM may result in vanilla game crashes unrelated to this feature, but which are never normally encountered in vanilla.</strong></dd>
 	<dt>Show somaria pits</dt>
 	<dd>Modifies the upper layer tilemap to mark pits.<strong class="lag"><b>NOTE:</b> this feature is intended for finding pits created by door glitches, but it will mark all standard pit tiles the same way.</strong></dd>
-</dl>
-
-<h3 id="menuHUD">HUD extras</h3>
-<dl>
-	<dt>Health display<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>How to show Link's current and max health:
-		<dl class="subDefinition">
-			<dt>Numerical</dt>
-			<dd>Classic practice hack display under rupee counter</dd>
-			<dt>Vanilla</dt>
-			<dd>Vanilla graphical display <strong class="lag"><b>NOTICE:</b> vanilla hearts will be drawn to the HUD first, and additional HUD features may be drawn over them.</strong></dd>
-		</dl>
-	</dd>
-	<dt>Input display<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>Visual indication of every button registered each frame.
-		<dl class="subDefinition">
-			<dt>Off</dt>
-			<dd>Disabled.</dd>
-			<dt>Graphical</dt>
-			<dd>Rectangle buttons arranged like a controller.</dd>
-			<dt>Classic</dt>
-			<dd>Original character display.</dd>
-			<dt>Classic Gray</dt>
-			<dd>Classic with unpressed buttons in gray.</dd>
-		</dl>
-	</dd>
-	<dt>Room time<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>Time spent on the current screen, starting from the beginning of the last transition.</dd>
-	<dt>Lag counter<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>Count of lag frames on the current screen, starting from the beginning of the last transition.</dd>
-	<dt>Heart lag<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>Animated spinning square that indicates there is heart lag present.</dd>
-	<dt>Idle frames<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>Count of frames with no relevant input, starting from the beginning of the last transition.</dd>
-	<dt>Segment time<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>Time spent since the beginning of the last segment timer reset.</dd>
-	<dt>Coordinates<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>Absolute position of Link (X,Y)	
-		<dl class="subDefinition">
-			<dt>Off</dt>
-			<dd>No coordinates display.</dd>
-			<dt>3 digit</dt>
-			<dd>3 digit coordinate display.</dd>
-			<dt>4 digit</dt>
-			<dd>I'm not actually sure&hellip;</dd>
-		</dl>
-	</dd>
-	<dt>QW indicator<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>Displays an icon on the HUD when the current camera will produce a quickwarp.</dd>
-	<dt>Lanmola cycs<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>Displays a counter for the cycle count of the three Lanmolas individually.</dd>
-	<dt>RAM watch<sup class="badge sa1-badge">SA1</sup></dt>
-	<dd>
-		<dl class="subDefinition">
-			<dt>Subpixels</dt>
-			<dd>Displays current subpixel remainder (Hexadecimal)</dd>
-			<dt>Spooky altit</dt>
-			<dd>Ancilla height for slot 4</dd>
-			<dt>Arc variable</dt>
-			<dd>Overlord value used by Armos Knights and Ganon for circles.</dd>
-			<dt>Icebreaker</dt>
-			<dd>Same as subpixels, but tells you when you're in a door.</dd>
-		</dl>
-	</dd>
-	<dt>Super watch<sup class="badge lag-badge">LAG</sup></dt>
-	<dd>
-	<dl class="subDefinition">
-			<dt>Ancillae</dt>
-			<dd>Ancillae RAM watch geared towards misslotting</dd>
-			<dt>UW Glitches</dt>
-			<dd>RAM watch geared towards underworld glitches (see <a href="doorwatch.html">this page</a>).</dd>
-		</dl>
-	</dd>
-<!----
-	<dt>Lagometer</dt>
-	<dd>Shows a rough calculation of the amount of lag a frame has. The more the bar is filled, the closer a frame was to producing a lag frame. Lag from one frame does not affect the next, but trends in the lagometer can be used to gauge how laggy an area is.</dd>
-	<dt>Enemy HP</dt>
-	<dd>Shows the exact health of a single enemy. Attempts to find the most relevant enemy as you play. <strong class="lag"><b>WARNING:</b> this feature can be laggy.</strong></dd>
----->
 </dl>
 
 <h3 id="menuConfiguration">Configuration</h3>
