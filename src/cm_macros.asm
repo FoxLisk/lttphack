@@ -31,8 +31,8 @@ macro menu_header(name, size)
 endmacro
 
 macro add_self()
-	%add_menu_item(+++++++++++++++++++)
-+++++++++++++++++++
+	%add_menu_item(++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 endmacro
 
 macro add_menu_item(label)
@@ -93,7 +93,7 @@ ActionDoRoutines:
 	fillword ACTION_EXIT : fill !NUMBER_OF_COMMANDS*2
 
 ActionDrawRoutines:
-	fillword ACTION_EXIT : fill !NUMBER_OF_COMMANDS*2
+	fillword ACTION_EXIT-1 : fill !NUMBER_OF_COMMANDS*2
 
 macro MenuAction(name, args, icon)
 	!COMMAND_ID #= !COMMAND_ID+1
@@ -105,7 +105,7 @@ macro MenuAction(name, args, icon)
 	org ActionLengths+!COMMAND_ID : db <args> ; includes the ID byte
 	org ActionIcons+!COMMAND_ID : db <icon>
 	org ActionDoRoutines+(2*!COMMAND_ID) : dw CMDO_<name>
-	org ActionDrawRoutines+(2*!COMMAND_ID) : dw CMDRAW_<name>
+	org ActionDrawRoutines+(2*!COMMAND_ID) : dw CMDRAW_<name>-1
 endmacro
 
 pushpc
@@ -135,7 +135,7 @@ macro preset(type, name, category, segment, scene)
 #presetdata_<category>_<segment>_<scene>:
 	dw presetpersistent_<category>_<segment>
 	dw presetpersistent_<category>_<segment>_<scene>
-	dw presetSRAM_<category>_<segment>_<scene>
+	dw presetSRAM_<category>_<segment>_<scene>_end
 endmacro
 ;-------------------------------------------------------------------------------
 %MenuAction("TOGGLE", 3, $6B)
@@ -242,8 +242,6 @@ macro toggle_func_onoff_here(name, addr)
 	%toggle_func(<name>, <addr>, ?here)
 #?here:
 endmacro
-
-
 
 ;-------------------------------------------------------------------------------
 %MenuAction("SUBMENU", 4, $69)

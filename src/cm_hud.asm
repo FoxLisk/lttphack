@@ -14,7 +14,7 @@ HUDEXTRAS_SUBMENU:
 	%list_item("Classic Gray")
 
 ;===============================================================================
-!counter_count = 14
+!counter_count = 17
 %choice("Counter 1", !ram_counter1, !counter_count, counter_names)
 %choice("Counter 2", !ram_counter2, !counter_count, counter_names)
 %choice("Counter 3", !ram_counter3, !counter_count, counter_names)
@@ -49,8 +49,11 @@ endmacro
 	%new_counter($0114, "Tile")
 	%new_counter($02A2, "Spooky")
 	%new_counter($0B08, "Arc variable")
+	%new_counter($0690, "WEST SOMARIA")
 	%new_counter($03C4, "Anc index")
 	%new_counter($C000, "Pits")
+	%new_counter($039D, "Hookslot")
+	%new_counter($0E50, "Boss HP")
 
 #reinit_counteraddr:
 	REP #$30
@@ -99,7 +102,7 @@ endmacro
 	%list_item("Ancilla IXd")
 
 ;===============================================================================
-!ancprop_count = 4
+!ancprop_count = 12
 %choice("Ancilla prop 1", !ram_ancprop1, !ancprop_count, ancprop_names)
 %choice("Ancilla prop 2", !ram_ancprop2, !ancprop_count, ancprop_names)
 %choice("Ancilla prop 3", !ram_ancprop3, !ancprop_count, ancprop_names)
@@ -123,7 +126,15 @@ endmacro
 	%new_ancprop($0C4A, "ID")
 	%new_ancprop($0BFA, "Y coord")
 	%new_ancprop($0C04, "X coord")
-	%new_ancprop($0C5E, "Item get")
+	%new_ancprop($029E, "Altitude")
+	%new_ancprop($0C7C, "Layer")
+	%new_ancprop($0C5E, "Extension")
+	%new_ancprop($03E4, "Tile prop")
+	%new_ancprop($03A4, "EG check")
+	%new_ancprop($0C72, "Direction")
+	%new_ancprop($0BFA, "Delta X")
+	%new_ancprop($0C04, "Delta Y")
+	%new_ancprop($0BFA, "Delta X")
 
 ;===============================================================================
 %toggle_onoff("Heart lag", !ram_heartlag_spinner)

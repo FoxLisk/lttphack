@@ -23,7 +23,7 @@ org $00841E
 	; Vanilla OAM cycles: 4 scanlines - 10 H
 	; improved to: 2 scanlines + 28H
 
-	;set up
+	; set up
 	LDA.b #OAM_Cleaner>>16 : STA.w $4354
 	LDX.w #$8001 : STX.w $4350
 
@@ -90,8 +90,11 @@ org $0080D5
 	JSL nmi_expand
 
 org $008174
-	LDA.b $1C : STA.w SA1RAM.LayerCache+0
-	LDA.b $1D : STA.w SA1RAM.LayerCache+1
+	; skip TM and TS writes
+	; they're done later with extra logic
+	; LDA.b $1C : STA.w $212C
+	; LDA.b $1D : STA.w $212D
+	BRA ++ : skip 3+2+3 : ++
 
 ;org $0081A0 ; save camera correction for NMI expansion
 ;	BRA + ; save time during NMI
@@ -116,15 +119,9 @@ nmi_expand:
 	PHA ; A is 0 from right before the hook
 	PLB ; and that happens to be the bank we want
 
-	LDA.w SA1RAM.disabled_layers
-	XBA
-	LDA.w SA1RAM.disabled_layers
+	LDA.w SA1RAM.disabled_layers : EOR.b $1C : STA.w $212C
+	LDA.w SA1RAM.disabled_layers : EOR.b $1D : STA.w $212D
 
-	REP #$20
-	TRB.w SA1RAM.LayerCache
-	LDA.w SA1RAM.LayerCache : STA.w $212C
-
-	SEP #$30
 	LDA.b $12 : STA.w SA1IRAM.CopyOf_12
 
 	LDA.b #$12 ; timers NMI
@@ -279,7 +276,7 @@ SNES_CUSTOM_NMI:
 
 	PEA.w $0000
 	PLD
-	TDC
+	TDC ; A=0000
 	TAX
 
 	PHK
@@ -310,6 +307,10 @@ SNES_CUSTOM_NMI:
 	LDA.b #$04 ; only show BG3
 	STA.b $212C
 	STZ.b $212D
+
+	LDA.b #$09 : STA.w $2105 ; BG mode 1
+	LDA.b #$63 : STA.w $2109 ; restore tilemap and char addresses
+	LDA.b #$07 : STA.w $210C
 
 	; BG 3 scroll
 	LDA.b #$01
@@ -412,7 +413,3 @@ SNES_CUSTOM_NMI:
 	db 27 : dw !ram_hud_bg
 
 	db $FF ; done
-
-
-
-

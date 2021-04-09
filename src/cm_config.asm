@@ -1,5 +1,5 @@
 CONFIG_SUBMENU:
-%menu_header("CONFIGURATION", 6)
+%menu_header("CONFIGURATION", 8)
 
 ;===============================================================================
 %toggle_onoff("Rerandomize", !ram_rerandomize_toggle)
@@ -47,6 +47,14 @@ CONFIG_SUBMENU:
 	%list_item("AD 2020")
 	%list_item("AD 2014")
 	%list_item("Any RMG")
+
+;===============================================================================
+%toggle_onoff("Death reload", !ram_autoload_preset)
+
+;===============================================================================
+%toggle_customtext_here("Menu open", !ram_cm_save_place)
+	%list_item("Main menu")
+	%list_item("Save place")
 
 ;===============================================================================
 %choice_here("HUD font", !ram_hud_font, 24)

@@ -6477,7 +6477,6 @@ presetSRAM_nmg:
 %write8($7EF3FF, $00) ; Deaths
 %write8($7EF3C8, $02) ; Entrances Phase
 %write8($7EF3CC, $01) ; Tagalong
-%write8($7EF3E5, $00) ; Validity (checksum)
 %write8($7EF34A, $01) ; Torch
 %write8($7EF366, $4000) ; BigKey1
 %writeroom($080, $043C) ; Room $0080: Hyrule Castle (Jail Cell Room) (......K....cqqq.)
@@ -6524,7 +6523,7 @@ presetSRAM_nmg:
 %write8($7EF3CC, $00) ; Tagalong
 %write8($7EF3C5, $02) ; Game Phase 1
 %write8($7EF3C6, $15) ; Game Phase 2
-%writeroom($012, $000F) ; Room $0012: Sanctuary (.............qqq)
+%writeroom($012, $000F) ; Room $0012: Sanctuary (............qqqq)
 ...end
 ;-------------------------------------------------------------------------------
 ..octorok

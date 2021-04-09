@@ -5,25 +5,21 @@
 ; Memory map:
 ; Bank 40:
 ;    $0000..$1FFF - vanilla SRAM
-;    $3000..$30FF - special control stuff
 ;    $6000..$7FFF - mirrored to page $60 for SNES
-;    $9000..$97FF - practice hack WRAM/Functionality
-;    $9800..$9EFF - SA-1 mirror for $3000..$36FF
-; Bank 41:
+;    $9000..$97FF - unused
+;    $9800..$9EFF - SA-1 savestate for $3000..$36FF
+; Bank 41: savestates
 ;    $0000..$5FFF - 7E:0000..7E:5FFF
 ;    $6000..$68FF - 7E:C000..7E:C8FF
 ;    $6900..$80FF - 7E:E800..7E:FFFF
 ;    $8100..$E0FF - 7F:0000..7F:5FFF
 ;    $E100..$F2FF - 7F:DD80..7F:EF80
 ;    $F300..$FAFF - 7F:EF80..7F:FFFF
-; Bank 42:
+; Bank 42: savestates
 ;    $0000..$FFFF - vram mirror
 ;==============================================================================
 org $400000
-struct BWRAM40 $400000
-	; page $00
-	.VSRAML: skip $2000 ; vanilla SRAM
-endstruct
+SA1SRAM = $400000
 
 struct SA1RAM $406000
 	.HUD skip $800 ; bg3 HUD
@@ -34,8 +30,7 @@ struct SA1RAM $406000
 	.SNES_NMI_VECTOR: skip 4
 	.SNES_NMI_args: skip 8
 
-	; stuff for various RAM
-
+	; stuff
 	.hex2dec_tmp: skip 2
 	.hex2dec_first_digit: skip 2
 	.hex2dec_second_digit: skip 2
@@ -101,8 +96,6 @@ endmacro
 
 
 ; Magic words
-SA1SRAM = $400000
-
 !EMPTY = $207F
 !QMARK = $212A
 !BLANK_TILE = $24F5
@@ -159,6 +152,7 @@ endmacro
 ; permanent SRAM that doesn't reinit across versions
 ; DO NOT CHANGE THE ORDER OF THESE
 %def_perm_sram("init_sig", !INIT_SIGNATURE)
+%def_perm_sram("cm_save_place", 0)
 
 %def_perm_sram("ctrl_load_last_preset", $20A0)
 %def_perm_sram("ctrl_replay_last_movie", $3020)

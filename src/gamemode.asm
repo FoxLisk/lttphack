@@ -458,8 +458,8 @@ gamemode_fill_everything:
 	dw $F376 : db 0   ; prevent filling of arrows
 	dw $F377 : db 50  ; max arrows
 
-	dw $F379 : db $FF ; every ability
-	dw $F37A : db $FF ; every crystal
+	dw $F379 : db $FE ; every ability
+	dw $F37A : db $7F ; every crystal
 
 	dw $F37B : db 1   ; half magic
 
@@ -475,23 +475,27 @@ gamemode_reset_segment_timer:
 	RTL
 
 gamemode_fix_vram:
+	SEP #$20
+	LDA.b #$80 : STA.w $2100 ; keep fblank on while we do stuff
+	STZ.w $4200
+
 	REP #$30
-	LDA #$0280 : STA $2100
-	LDA #$0313 : STA $2107
-	LDA #$0063 : STA $2109 ; zeros out unused bg4
-	LDA #$0722 : STA $210B
-	STZ $2133 ; mode 7 register hit, but who cares
+	LDA.w #$0280 : STA.w $2100
+	LDA.w #$0313 : STA.w $2107
+	LDA.w #$0063 : STA.w $2109 ; zeros out unused bg4
+	LDA.w #$0722 : STA.w $210B
+	STZ.w $2133 ; mode 7 register hit, but who cares
 
 	SEP #$20
-	LDA #$80 : STA $13 : STA $2100 ; keep fblank on while we do stuff
-	LDA $1B : BEQ ++
+	LDA.b $1B : BEQ ++
 	JSR fix_vram_uw
 	JSL load_default_tileset
 
 	LDA $7EC172 : BEQ ++
 	JSR fixpegs ; quick and dirty pegs reset
 
-++	LDA #$0F : STA $13
+++	LDA.b #$0F : STA.b $13
+	LDA.b #$81 : STA.w $4200
 	RTL
 
 fixpegs:

@@ -1,9 +1,18 @@
 Big stuff
 ----------
 
-- Z coordinate option?
+Room tab:
+	room ID selector
+	"Set to current room"
+	show flags
+	"Load room"
+	new menu chars for improved flag viewing?
 
-- Add options for what to show with ancilla watch?
+
+aga 2 rng
+	lui: agah2 submenu -> set positions for each of the agahs for cycles 1, 2, 3 and 4+
+
+- Z coordinate option?
 
 - Music always mutes
 
@@ -14,8 +23,6 @@ Big stuff
 - Counters (spec below)
 
 - Mashing & Pumping mini-game
-
-- Rewrite presets
 
 - "if you start a preset from first SW preset and play out the whole dungeon, you sometimes end up with a small key [before] bomb jump"
 

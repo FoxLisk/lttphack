@@ -15,14 +15,14 @@ incsrc timers.asm
 incsrc hudextras.asm
 incsrc rng.asm
 incsrc misc.asm
+incsrc music.asm
+incsrc init.asm
+incsrc presets2.asm
 
 org $218000
 incsrc tiles.asm
 
 org $228000
-incsrc init.asm
-
-org $238000
 CM:
 table resources/menu.tbl
 incsrc cm_macros.asm
@@ -44,15 +44,7 @@ print ""
 print "Custom menu size: $", hex(CM_END-CM)
 
 org $268000
-incsrc presets2.asm
 
-org $288000
-incsrc music.asm
-
-org $298000
-;incsrc movie.asm
-
-; ---- data ----
 
 org $308000
 print ""

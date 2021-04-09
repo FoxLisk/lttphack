@@ -62,7 +62,7 @@ CM_YRowToXOffset:
 	LSR
 	ASL #6
 
-	ADC.w #64+2 ; down 1 row + right 1
+	ADC.w #64 ; down 1 row
 
 	CPY.w #0
 	BEQ .header
@@ -85,7 +85,7 @@ DrawCurrentRow_ShiftY:
 ; Y = index into thing where 0 = header
 DrawCurrentRow:
 	REP #$30
-	PHY ; save this
+	PHY
 
 	JSR CM_YRowToXOffset
 
@@ -99,7 +99,7 @@ DrawCurrentRow:
 	TYA
 	LSR ; does it match our selection?
 
-	DEC ; negative means it was 0, so it's a header
+	DEC ; negative means it was 0, aka a header
 	BMI .header
 
 	SEP #$20
@@ -129,6 +129,11 @@ DrawCurrentRow:
 .setcol
 	STA.b SA1IRAM.cm_draw_color
 
+	ORA.w #$002F ; fill first character
+	STA.w SA1RAM.MENU, X
+	INX
+	INX
+
 	TYA
 	BEQ .isheader
 
@@ -144,21 +149,20 @@ DrawCurrentRow:
 
 	LDA.w ActionLengths, X ; this is how many bytes the header is for the item
 	AND.w #$00FF
-	TAY ; new location of data for name
+	TAY ; location of name
 
 	LDA.w ActionIcons, X ; get the icon, obviously
 	AND.w #$00FF
 	ORA.b SA1IRAM.cm_draw_color
-
 	PLX
-	STA.w SA1RAM.MENU, X ; save the icon to the menu
+	STA.w SA1RAM.MENU, X
 
-	LDA.w #16 ; for determining the filler
+	LDA.w #16 ; for determining the filler size
 	STA.b SA1IRAM.cm_draw_filler
 	INX
 	INX
 
-	; write each letter of the name
+	; write out item name
 .next_letter
 	LDA.b [SA1IRAM.cm_current_draw], Y
 	AND.w #$00FF
@@ -176,8 +180,9 @@ DrawCurrentRow:
 	BRA .next_letter
 
 .done_row_name
-; for X until option, draw chr $1F
-	LDY.b SA1IRAM.cm_draw_filler ; get number of characters left to fill in
+; for X until option, draw spaces
+	LDY.b SA1IRAM.cm_draw_filler ; number of characters to reach param
+	BMI .long_name
 
 	LDA.w #$002F
 	ORA.b SA1IRAM.cm_draw_color
@@ -190,6 +195,7 @@ DrawCurrentRow:
 	DEY
 	BPL .next_mid_fill
 
+.long_name
 	; now draw the specific routine type
 	PHX
 
@@ -200,10 +206,11 @@ DrawCurrentRow:
 
 	PEA.w .return-1
 
-	DEC
 	PHA
-	SEP #$20 ; more useful
+
+	SEP #$20 ; more useful during drawing
 	LDY.w #1 ; to skip the draw type
+
 	RTS
 
 .return

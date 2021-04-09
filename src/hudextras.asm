@@ -25,10 +25,10 @@ function char(n) = $2150+n
 
 pushpc
 org $008B7D
-	dw $240 ; make hud bigger, doesn't seem to cost any cycles
+	dw $200 ; make hud bigger, doesn't seem to cost any cycles
 
 org $0EFD3E
-	dw $6244, $6244 ; always draw the textbox low
+	dw $6145, $6244 ; make the higher textbox slightly lower
 
 org $0DFAAE
 	JMP fire_hud_irq
@@ -1098,11 +1098,18 @@ counters:
 	dw counter_tile
 	dw counter_spooky
 	dw counter_arcvar
+	dw counter_westsom
 	dw counter_index
 	dw counter_pit
+	dw counter_hookslot
+	dw counter_bosshp
+
+;===================================================================================================
 
 counter_nothing:
 	RTS
+
+;---------------------------------------------------------------------------------------------------
 
 counter_room:
 	LDY.w #!yellow ; color
@@ -1122,10 +1129,14 @@ counter_lag:
 	LDA.w #SA1IRAM.ROOM_TIME_LAG_DISPLAY ; address
 	JMP Draw_short_three
 
+;---------------------------------------------------------------------------------------------------
+
 counter_idle:
 	LDY.w #!white
 	LDA.w #SA1IRAM.ROOM_TIME_IDLE_DISPLAY
 	JMP Draw_short_three
+
+;---------------------------------------------------------------------------------------------------
 
 counter_segment:
 	LDY.w #!gray
@@ -1152,11 +1163,14 @@ counter_coords3:
 	LDY.w #3
 	JMP DrawCoordinates
 
+;---------------------------------------------------------------------------------------------------
+
 counter_coords:
 counter_coords4:
 	LDY.w #4
 	JMP DrawCoordinates
 
+;---------------------------------------------------------------------------------------------------
 
 counter_subpixels:
 	PHA
@@ -1180,6 +1194,7 @@ counter_subpixels:
 	STA.w SA1RAM.HUD+14, X
 	RTS
 
+;---------------------------------------------------------------------------------------------------
 
 counter_roomid:
 	; calculate correct room id first
@@ -1217,6 +1232,8 @@ counter_roomid:
 	LDY.w #3
 	LDA.b SA1IRAM.CopyOf_A0
 	JMP DrawHex_white
+
+;---------------------------------------------------------------------------------------------------
 
 counter_quadrant:
 	LSR
@@ -1304,16 +1321,36 @@ counter_quadrant:
 	STA.w SA1RAM.HUD+12, X
 	RTS
 
+;---------------------------------------------------------------------------------------------------
+
 counter_index:
 counter_spooky:
 counter_tile:
+counter_hookslot:
 	AND.w #$00FF
 	LDY.w #2
 	JMP DrawHex_white
 
+;---------------------------------------------------------------------------------------------------
+
 counter_arcvar:
 	LDY.w #4
 	JMP DrawHex_white
+
+;---------------------------------------------------------------------------------------------------
+
+counter_westsom:
+	LDY.w #4
+	CMP.w #$0010
+	BCS .bad
+
+.good
+	JMP DrawHex_gray
+
+.bad
+	JMP DrawHex_red
+
+;---------------------------------------------------------------------------------------------------
 
 counter_pit:
 	AND.w #$00FF
@@ -1339,6 +1376,13 @@ counter_pit:
 	STA.w SA1RAM.HUD+14, X
 	RTS
 
+;---------------------------------------------------------------------------------------------------
+
+counter_bosshp:
+	AND.w #$00FF
+	LDY.w #!white ; color
+	JMP Draw_short_three
+
 ;===============================================================================
 ; full line counters
 ;===============================================================================
@@ -1354,10 +1398,12 @@ linecounters:
 	dw linecounter_nothing
 
 ;===============================================================================
+
 linecounter_nothing:
 	RTS
 
 ;===============================================================================
+
 linecounter_roomdata:
 	; make room data
 	; do calculate the same as in bank02
@@ -1437,6 +1483,7 @@ linecounter_roomdata:
 	dw !BLUE_PAL, !RED_PAL, !GREEN_PAL, !YELLOW_PAL
 
 ;===============================================================================
+
 linecounter_camerax:
 	LDA.w #char(9)
 	PEA.w !white
@@ -1537,16 +1584,101 @@ linecounter_cameray:
 	JMP DrawHEX4ForwardSaveY
 
 ;===============================================================================
-
+; TODO make sure LINEVAL+8 for prop ID works
 linecounter_ancilla04:
 linecounter_ancilla59:
 linecounter_ancillaIX:
 	LDA.w #5
 	STA.b SA1IRAM.SCRATCH+14
-	LDA.w SA1IRAM.LINEVAL+12, Y
-	CMP.w #$03C4
-	BEQ linecounter_ancilla_id
 
+	PHX
+
+	LDX.w SA1IRAM.LINEVAL+8, Y
+	LDA.w .vectors, X
+
+	PLX
+	PHA
+	RTS
+
+.vectors
+	dw linecounter_ancilla_id-1
+	dw linecounter_ancilla_y-1
+	dw linecounter_ancilla_x-1
+	dw linecounter_ancilla_altitude-1
+	dw linecounter_ancilla_layer-1
+	dw linecounter_ancilla_itemget-1
+	dw linecounter_ancilla_tile-1
+	dw linecounter_ancilla_egcheck-1
+	dw linecounter_ancilla_direction-1
+	dw linecounter_ancilla_delta_y-1
+	dw linecounter_ancilla_delta_x-1
+
+;---------------------------------------------------------------------------------------------------
+
+linecounter_ancilla_delta_x:
+.next_ancilla
+	INX
+	INX
+
+	SEP #$21
+	LDA.b SA1IRAM.CopyOf_22
+	SBC.w SA1IRAM.LINEVAL, Y
+
+	REP #$20
+	AND.w #$00FF
+	CMP.w #$0002
+	BEQ ++
+	JSR DrawHEX2ForwardSaveY_white
+
+	BRA .continue
+
+++	JSR DrawHEX2ForwardSaveY_gray
+
+.continue
+	INY
+	INY
+	DEC.b SA1IRAM.SCRATCH+14
+	BNE .next_ancilla
+	RTS
+
+;---------------------------------------------------------------------------------------------------
+
+linecounter_ancilla_delta_y:
+.next_ancilla
+	INX
+	INX
+
+	SEP #$21
+	LDA.b SA1IRAM.CopyOf_20
+	SBC.w SA1IRAM.LINEVAL, Y
+
+	REP #$20
+	AND.w #$00FF
+	CMP.w #$0002
+	BEQ ++
+
+	JSR DrawHEX2ForwardSaveY_yellow
+
+	BRA .continue
+
+++	JSR DrawHEX2ForwardSaveY_gray
+
+.continue
+	INY
+	INY
+	DEC.b SA1IRAM.SCRATCH+14
+	BNE .next_ancilla
+	RTS
+
+
+;---------------------------------------------------------------------------------------------------
+
+linecounter_ancilla_x:
+linecounter_ancilla_itemget:
+linecounter_ancilla_tile:
+linecounter_ancilla_direction:
+linecounter_ancilla_layer:
+linecounter_ancilla_altitude:
 .next_ancilla
 	INX
 	INX
@@ -1561,6 +1693,25 @@ linecounter_ancillaIX:
 	BNE .next_ancilla
 	RTS
 
+;---------------------------------------------------------------------------------------------------
+
+linecounter_ancilla_y:
+.next_ancilla
+	INX
+	INX
+
+	LDA.w SA1IRAM.LINEVAL, Y
+	JSR DrawHEX2ForwardSaveY_yellow
+
+.continue
+	INY
+	INY
+	DEC.b SA1IRAM.SCRATCH+14
+	BNE .next_ancilla
+	RTS
+
+;---------------------------------------------------------------------------------------------------
+
 linecounter_ancilla_id:
 .next_ancilla
 	INX
@@ -1569,12 +1720,8 @@ linecounter_ancilla_id:
 	LDA.w SA1IRAM.LINEVAL, Y
 	AND.w #$00FF : BEQ .zero
 
-	CMP.w #$0A : BCC .normal
-	BEQ .replace
-
+	CMP.w #$0A : BEQ .replace
 	CMP.w #$3C : BEQ .replace
-	BCS .normal
-
 	CMP.w #$13 : BNE .normal
 
 .replace
@@ -1587,6 +1734,30 @@ linecounter_ancilla_id:
 
 .normal
 	JSR DrawHEX2ForwardSaveY_white
+
+.continue
+	INY
+	INY
+	DEC.b SA1IRAM.SCRATCH+14
+	BNE .next_ancilla
+	RTS
+
+;---------------------------------------------------------------------------------------------------
+
+linecounter_ancilla_egcheck:
+.next_ancilla
+	INX
+	INX
+
+	LDA.w SA1IRAM.LINEVAL, Y
+	AND.w #$00FF : BEQ .zero
+
+.bad
+	JSR DrawHEX2ForwardSaveY_red
+	BRA .continue
+
+.zero
+	JSR DrawHEX2ForwardSaveY_gray
 
 .continue
 	INY

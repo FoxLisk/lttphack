@@ -47,7 +47,7 @@ ITEMS_SUBMENU:
 %toggle_long("Quake", !ram_item_quake)
 
 ;===============================================================================
-%toggle_long("Lantern", !ram_item_lantern)
+%toggle_long("Lamp", !ram_item_lantern)
 %toggle_long("Hammer", !ram_item_hammer)
 
 ;===============================================================================

@@ -1,3 +1,5 @@
+; TODO scrape data for $7FDF80 in new presets and move them to persistent per segment
+
 pushpc
 org $02FFC7
 PresetLoadArea_UW:
@@ -7,12 +9,11 @@ PresetLoadArea_UW:
 	PLB
 	JSR.w $02D854
 	JMP.w $028157
-	;JSR Dungeon_LoadEntrance ; does PHK itself
-	;RTL
 
 PresetLoadArea_OW:
 	PHK
 	PLB
+	REP #$20
 	JSR.w $02E2EF
 	JSL $09C4A1 ; skip some extra resetting we already did
 	STZ.b $6C
@@ -255,6 +256,9 @@ preset_load:
 	STZ.w $02F0
 	STZ.w $0ABD
 
+
+
+
 	; start loading preset data
 	LDA.w #$3000 : TCD
 
@@ -263,6 +267,18 @@ preset_load:
 	PHA
 	PLB ; do stuff in bank 7E first
 
+	; resstore some standard SRAM stuff
+	LDA.b #$18 : STA.w $7EF36C : STA.w $7EF36D ; HP
+	LDA.b #$68 : STA.w $7EF379 ; Abilities
+
+	; Chompy face player name
+	REP #$20
+	LDA.w #$00CE : STA.w $7EF3D9
+	LDA.w #$018C : STA.w $7EF3DB : STA.w $7EF3DD : STA.w $7EF3E1
+
+
+
+	SEP #$20
 	; make the banks match just in case
 	LDA.b SA1IRAM.preset_addr+2
 	STA.b SA1IRAM.preset_prog+2
@@ -275,7 +291,7 @@ preset_load:
 	LDA.b SA1IRAM.preset_addr
 	STA.b SA1IRAM.preset_reader
 
-	print pc
+	;print pc
 	LDY.w #$0002 ; start getting data for the preset
 
 	; get the persistence data location
@@ -793,7 +809,7 @@ preset_load:
 	BRA ..next
 
 ..write_room
-	LDA.b [SA1IRAM.preset_prog]
+	LDA.b [SA1IRAM.preset_prog], Y
 	STA.w $7EF000, X
 	BRA ..next_from_room
 

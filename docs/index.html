@@ -80,6 +80,7 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 	</li>
 	<li>Configuration:
 		<ul>
+			<li>Added a choice for where the menu opens to.</li>
 			<li>HUD colors can now be customized</li>
 		</ul>
 	</li>
@@ -87,6 +88,9 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 		<ul>
 			<li>Pressing select in the practice menu now brings you to the tippy top.</li>
 			<li>Pressing Y in the practice menu now enables options and sets numfields to their max.</li>
+			<li>The higher position for text boxes has been moved down 1 tile to make room for additional HUD features.</li>
+			<li>Safeguards SA-1 for registers against heavy corruption from overlay corruption.</li>
+			<li>Practice menu will restore BG3 properties under heavy VRAM corruption (unavoidable utility fix).</li>
 			<li>I moved this section up here so it's easier to find. Anyone who asks about new features should contact their local ISP to ban them from this webpage. I'd do it myself, but this is all hosted by GitHub, so I have no real control there.</li>
 			<li>Older updates are on a separate page now. If you're reading this, then you're probably in good shape with regards to that ISP banning thing.</li>
 			<li>No one reads these. Why do I even bother?</li>
@@ -784,8 +788,6 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 			<dd>Time spent on the current screen, starting from the beginning of the last transition.</dd>
 			<dt>Lag counter</dt>
 			<dd>Count of lag frames on the current screen, starting from the beginning of the last transition.</dd>
-			<dt>Heart lag</dt>
-			<dd>Animated spinning square that indicates there is heart lag present.</dd>
 			<dt>Idle frames</dt>
 			<dd>Count of frames with no relevant input, starting from the beginning of the last transition.</dd>
 			<dt>Segment time</dt>
@@ -793,26 +795,32 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 			<dt>Coordinates</dt>
 			<dd>Absolute position of Link (X,Y)</dd>
 			<dt>Subpixels</dt>
-			<dd>Current subpixel remainder (Hexadecimal). Includes door marker for icebreaker, etc.</dd>
+			<dd>Current subpixel remainder (Hexadecimal). Includes door marker for icebreaker, etc.; address: $7E002A</dd>
 			<dt>Room ID</dt>
-			<dd>Current room ID, corrected room ID (based on coordinates), and sync.</dd>
+			<dd>Current room ID, corrected room ID (based on coordinates), and sync; address: $7E00A0</dd>
 			<dt>Quadrant</dt>
-			<dd>Current quadrant, corrected quadrant (based on coordinates), and sync.</dd>
+			<dd>Current quadrant, corrected quadrant (based on coordinates), and sync; address: $7E00A9</dd>
 			<dt>Spooky</dt>
-			<dd>Ancilla height for slot 4</dd>
+			<dd>Ancilla height for slot 4; address: $7E02A2</dd>
 			<dt>Arc variable</dt>
-			<dd>Overlord value used by Armos Knights and Ganon for circles.</dd>
+			<dd>Overlord value used by Armos Knights and Ganon for circles; address: $7E0B08</dd>
+			<dt>WEST SOMARIA</dt>
+			<dd>West somaria door timer; address: $7E0690</dd>
 			<dt>Anc index</dt>
-			<dd>Ancilla overload starting index</dd>
+			<dd>Ancilla overload starting index; address: $7E03C4</dd>
 			<dt>Pits</dt>
-			<dd>Current pit destination/damage flag</dd>
+			<dd>Current pit destination/damage flag; address: $7EC000</dd>
+			<dt>Hookslot</dt>
+			<dd>Hookshot slot index; address: $7E039D</dd>
+			<dt>Boss HP</dt>
+			<dd>Health of enemy in slot 0; address: $7E0E50</dd>
 		</dl>
 	</dd>
 
 	<dt>Line counter 1<sup class="badge lag-badge">LAG</sup></dt>
 	<dt>Line counter 2<sup class="badge lag-badge">LAG</sup></dt>
 	<dt>Line counter 3<sup class="badge lag-badge">LAG</sup></dt>
-	<dd>3 larger slots displayed on the HUD.
+	<dd>3 larger lines of info displayed on the HUD.
 		<dl class="subDefinition">
 			<dt>Room flags</dt>
 			<dd>Boss heart, key, chest, and door floogs for current room.</dd>
@@ -834,8 +842,29 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 	<dd>Custom property for ancillae corresponding to counter #
 		<dl class="subDefinition">
 			<dt>ID</dt>
-			<dd>Ancilla ID from $03C4,X (includes
+			<dd>Ancilla ID from $03C4,X (includes coloring for 00 and replacable particles).</dd>
+			<dt>Y coord</dt>
+			<dd>Ancilla Y-Coordinate; address: $7E0BFA,X</dd>
+			<dt>X coord</dt>
+			<dd>Ancilla X-Coordinate; address: $7E0C04,X</dd>
+			<dt>Altotude</dt>
+			<dd>Ancilla Z-Coordinate; address: $7E029E,X</dd>
+			<dt>Layer</dt>
+			<dd>Ancilla layer; address: $7E0C7C,X</dd>
+			<dt>Extension</dt>
+			<dd>Used both for hookshot length and item receipt ID, among other less interesting properties; address: $7E0C5E,X</dd>
+			<dt>Tile prop</dt>
+			<dd>Tile interaction ID; address: $7E03E4,X</dd>
+			<dt>EG check</dt>
+			<dd>Something; address: $7E03A4,X</dd>
+			<dt>Direction</dt>
+			<dd>Generally used for direction of ancilla; address: $7E0C72,x</dd>
+			<dt>Delta Y</dt>
+			<dt>Delta X</dt>
+			<dd>Difference between Link's coordinates and the ancillae's.</dd>
 	</dd>
+	<dt>Heart lag<sup class="badge sa1-badge">SA1</sup></dt>
+	<dd>Animated spinning square that indicates there is heart lag present.</dd>
 	<dt>QW indicator<sup class="badge sa1-badge">SA1</sup></dt>
 	<dd>Displays an icon on the HUD when the current camera will produce a quickwarp.</dd>
 	<dt>Lanmola cycs<sup class="badge sa1-badge">SA1</sup></dt>
@@ -886,6 +915,8 @@ title: LTTPHack - A Practice ROM for ALttP Runners
 	<dd>Reloads the last preset upon death.</dd>
 	<dt>Preset cat</dt>
 	<dd>Changes the selection of <a href="#menuPresets">presets</a>.</dd>
+	<dt>Menu open</dt>
+	<dd>Select whether the practice menu opens up to where you left off or resets to the top.</dd>
 	<dt>HUD font</dt>
 	<dd>Change the font used by HUD extras. This will not change the font for the vanilla HUD or for the HP, max HP, and enemy HP displays. <i>Hover over options for larger preview.</i>
 		<ul class="fontList">

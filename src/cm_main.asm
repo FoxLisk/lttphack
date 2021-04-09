@@ -17,7 +17,6 @@ cm_mainmenu:
 	%submenu("Shortcuts", SHORTCUTS_SUBMENU)
 	%submenu("Configuration", CONFIG_SUBMENU)
 
-
 ;===============================================================================
 cm_preset_data_banks:
 CM_Main:
@@ -47,8 +46,18 @@ CM_Main:
 
 	; assume something went wrong if it's not 2
 	STZ.b SA1IRAM.cm_submodule
+	BRA .loop
 
 .fine
+	SEP #$20
+	LDA.w !ram_cm_save_place
+	BEQ .loop
+
+	JSR CM_ResetStackAndMenu
+	JSR DrawCurrentMenu
+	JSL NMI_RequestFullMenuUpdate
+
+.loop
 	SEP #$30
 
 	LDA.b #$81
@@ -62,7 +71,7 @@ CM_Main:
 	LDX.b SA1IRAM.cm_submodule
 
 	JSR (.submodules, X)
-	BRA .fine
+	BRA .loop
 
 .submodules
 	dw CM_Init
