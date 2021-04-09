@@ -144,6 +144,10 @@ init_hook:
 	STZ.w !ram_superwatch
 	STZ.w !ram_superwatch+1
 
+	LDA.l !ram_feature_music : BNE .done
+	JSL mute_music
+
+
 ;===============================================================================
 ; everything is done now
 ; back to the game

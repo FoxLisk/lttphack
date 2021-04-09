@@ -10,4 +10,6 @@ flips --create --bps alttp.sfc "lttphacksa1.sfc" "../docs/patcher/files/sa1.bps"
 
 del "lttphacksa1.sfc"
 
+cd ..
+
 pause

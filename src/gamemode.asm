@@ -101,8 +101,8 @@ gamemode_savestate:
 
 .dont_rerandomize_1
 	SEP #$20
-	; Mute music
-	LDA #$F0 : STA $2140
+	; Remember which song was playing before loading state
+	LDA.w $0130 : STA.w SA1RAM.old_music
 
 	; Mute ambient sounds
 	LDA #$05 : STA $2141
@@ -120,8 +120,10 @@ gamemode_savestate:
 	LDX $99 : STX $2130
 
 	INC $15
-	LDA $0130 : STA $012C
-	STZ $0133
+	; Update which song is currently being played by the APU
+	LDA.w SA1RAM.old_music : STA.w $0133
+	; Attempt to restart the current song if it isn't already playing
+	LDA.w $0130 : STA.w $012C
 
 	LDA $0131 : CMP #$17 : BEQ .annoyingSounds ; Bird music
 	STA $012D : STZ $0131

@@ -10,6 +10,7 @@ CONFIG_SUBMENU:
 	REP #$20
 	BNE ..unmute
 
+#mute_music_entry:
 ..mute
 	LDA.w #MutedInstruments
 	BRA ..transfer
@@ -18,6 +19,19 @@ CONFIG_SUBMENU:
 	LDA.w #UnmutedInstruments
 
 ..transfer
+	JSR transfer_adsr
+
+	LDA.l $0133 : STA.l $012C
+	
+	RTL
+
+#mute_music:
+	REP #$20
+	LDA.w #MutedInstruments
+	JSR transfer_adsr
+	RTL
+
+#transfer_adsr:
 	STA.w $0000
 	LDA.w #$0000
 	PHD
@@ -29,11 +43,10 @@ CONFIG_SUBMENU:
 
 	LDA.b #UnmutedInstruments>>16
 	JSL $00891D ; load song bank
-
 	SEP #$30
-	LDA $0133 : STA $012C
 	PLD
-	RTL
+	RTS
+
 
 ;===============================================================================
 %toggle_onoff("Death reload", !ram_autoload_preset)

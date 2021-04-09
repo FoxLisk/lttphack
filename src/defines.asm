@@ -69,6 +69,8 @@ struct SA1RAM $406000
 	.loadroomid: skip 2
 
 	.disabled_layers: skip 2
+
+	.old_music: skip 1
 .end_of_clearable_sa1ram:
 
 	.cm_input_timer: skip 2
